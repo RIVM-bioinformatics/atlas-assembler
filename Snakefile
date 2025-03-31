@@ -13,11 +13,15 @@ for param in ["threads", "mem_gb"]:
 
 OUT = config["output_dir"]
 
+
+#Data quality control and cleaning
+# include: "workflow/rules/pycoqc.smk"
+# include: "workflow/rules/nanoplot.smk"
+# include: "workflow/rules/filtering.smk"
+include: "workflow/rules/test_sample_sheet.smk"
+
 localrules:
     all,
-
-
-include: "workflow/rules/rule.smk"
 
 
 rule all:

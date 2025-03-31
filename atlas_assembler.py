@@ -1,10 +1,10 @@
 """
-Juno template
-Authors: Karim Hajji, Roxanne Wolthuis
+Atlas Assembler
+Authors: Fabian Landman, Sohana Singh, Roxanne Wolthuis
 Organization: Rijksinstituut voor Volksgezondheid en Milieu (RIVM)
 Department: Infektieziekteonderzoek, Diagnostiek en Laboratorium
             Surveillance (IDS), Bacteriologie (BPD)     
-Date: 05-04-2023   
+Date: 31-03-2025   
 """
 
 from pathlib import Path
@@ -18,11 +18,11 @@ from typing import Optional
 from version import __package_name__, __version__, __description__
 
 def main() -> None:
-    juno_template = JunoTemplate()
-    juno_template.run()
+    atlas_assembler = AtlasAssembler()
+    atlas_assembler.run()
 
 @dataclass
-class JunoTemplate(Pipeline):
+class AtlasAssembler(Pipeline):
     pipeline_name: str = __package_name__
     pipeline_version: str = __version__
     input_type: str = "fastq"
@@ -30,22 +30,49 @@ class JunoTemplate(Pipeline):
     def _add_args_to_parser(self) -> None:
         super()._add_args_to_parser()
 
-        self.parser.description = "Template juno pipeline. If you see this message please change it to something appropriate"
+        self.parser.description = "Atlas Assembler pipeline for assembly of sigle read ONT sequencing data"
         
         self.add_argument(
-            "--example-option",
-            dest="example",
-            type=str,
-            required=False,
-            metavar="STR",
-            help="This is an optional argument, specific for this pipeline. General options are included in juno-library.",
+            "-d",
+            "--db-dir",
+            type=Path,
+            metavar="DIR",
+            default="/mnt/db/juno/kraken2_db",
+            help="Relative or absolute path to the Kraken2 database. Default: /mnt/db/juno/kraken2_db.",
+        )
+        self.add_argument(
+            "-hc",
+            "--headcrop",
+            type=int,
+            metavar="INT",
+            default=50,
+            help="Trim N nucleotodes from the start of a read",
+		)
+        self.add_argument(
+            "-tc",
+            "--tailcrop",
+            type=int,
+            metavar="INT",
+            default=50,
+            help="Trim N nucleotides from N nucleotides from the end of a read",
+		)
+        self.add_argument(
+            "-kp",
+            "--keep-percentage",
+            type=float,
+            metavar="FLOAT",
+            default=0.8,
+            help="Percentage of reads that should be kept after trimming. Default: 0.8",
         )
         
     def _parse_args(self) -> argparse.Namespace:
         args = super()._parse_args()
 
         # Optional arguments are loaded into self here
-        self.example: bool = args.example
+        self.db_dir: Path = args.db_dir.resolve()
+        self.headcrop: int = args.headcrop
+        self.tailcrop: int = args.tailcrop
+        self.keep_percentage: float = args.keep_percentage
 
         return args
     
@@ -64,8 +91,8 @@ class JunoTemplate(Pipeline):
             )
 
         # Extra class methods for this pipeline can be invoked here
-        if self.example:
-            self.example_class_method()
+        # if self.example:
+        #     self.example_class_method()
 
         with open(
             Path(__file__).parent.joinpath("config/pipeline_parameters.yaml")
@@ -77,7 +104,11 @@ class JunoTemplate(Pipeline):
             "input_dir": str(self.input_dir),
             "output_dir": str(self.output_dir),
             "exclusion_file": str(self.exclusion_file),
-            "example": str(self.example), # other user parameters can be included in user_parameters.yaml here
+            # "example": str(self.example), # other user parameters can be included in user_parameters.yaml here
+            "db_dir": str(self.db_dir),
+            "headcrop": str(self.headcrop),
+            "tailcrop": str(self.tailcrop),
+            "keep_percentage": str(self.keep_percentage),
         }
 
 
