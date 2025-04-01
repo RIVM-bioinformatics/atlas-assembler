@@ -45,7 +45,7 @@ class AtlasAssembler(Pipeline):
             "--headcrop",
             type=int,
             metavar="INT",
-            default=50,
+            default=0,
             help="Trim N nucleotodes from the start of a read",
 		)
         self.add_argument(
@@ -53,7 +53,15 @@ class AtlasAssembler(Pipeline):
             "--tailcrop",
             type=int,
             metavar="INT",
-            default=50,
+            default=0,
+            help="Trim N nucleotides from N nucleotides from the end of a read",
+		)
+        self.add_argument(
+            "-len",
+            "--length",
+            type=int,
+            metavar="INT",
+            default=1,
             help="Trim N nucleotides from N nucleotides from the end of a read",
 		)
         self.add_argument(
@@ -72,6 +80,7 @@ class AtlasAssembler(Pipeline):
         self.db_dir: Path = args.db_dir.resolve()
         self.headcrop: int = args.headcrop
         self.tailcrop: int = args.tailcrop
+        self.length: int = args.length
         self.keep_percentage: float = args.keep_percentage
 
         return args
@@ -108,6 +117,7 @@ class AtlasAssembler(Pipeline):
             "db_dir": str(self.db_dir),
             "headcrop": str(self.headcrop),
             "tailcrop": str(self.tailcrop),
+            "length": str(self.length),
             "keep_percentage": str(self.keep_percentage),
         }
 
