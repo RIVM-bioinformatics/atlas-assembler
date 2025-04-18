@@ -72,7 +72,38 @@ class AtlasAssembler(Pipeline):
             default=0.8,
             help="Percentage of reads that should be kept after trimming. Default: 0.8",
         )
-        
+        self.add_argument(
+            "-mpt",
+            "--mean-quality-threshold",
+            type=int,
+            metavar="INT",
+            default=28,
+            help="Phred score to be used as threshold for cleaning (filtering) fastq files.",
+        )
+        self.add_argument(
+            "-ws",
+            "--window-size",
+            type=int,
+            metavar="INT",
+            default=5,
+            help="Window size to use for cleaning (filtering) fastq files.",
+        )
+        self.add_argument(
+            "-ml",
+            "--minimum-length",
+            type=int,
+            metavar="INT",
+            default=50,
+            dest="min_read_length",
+            help="Minimum length for fastq reads to be kept after trimming.",
+        )
+        self.add_argument(
+            "-qu",
+            "--quality",
+            type=int,
+            metavar="INT",  
+            default=20,
+        )
     def _parse_args(self) -> argparse.Namespace:
         args = super()._parse_args()
 
@@ -82,6 +113,10 @@ class AtlasAssembler(Pipeline):
         self.tailcrop: int = args.tailcrop
         self.length: int = args.length
         self.keep_percentage: float = args.keep_percentage
+        self.mean_quality_threshold: int = args.mean_quality_threshold
+        self.window_size: int = args.window_size
+        self.min_read_length: int = args.min_read_length
+        self.quality: int = args.quality
 
         return args
     
@@ -91,7 +126,7 @@ class AtlasAssembler(Pipeline):
 
     def setup(self) -> None:
         super().setup()
-
+        self.snakemake_args["use_conda"] = True
         if self.snakemake_args["use_singularity"]:
             self.snakemake_args["singularity_args"] = " ".join(
                 [
@@ -119,6 +154,10 @@ class AtlasAssembler(Pipeline):
             "tailcrop": str(self.tailcrop),
             "length": str(self.length),
             "keep_percentage": str(self.keep_percentage),
+            "mean_quality_threshold": str(self.mean_quality_threshold),
+            "window_size": str(self.window_size),
+            "min_read_length": str(self.min_read_length),
+            "quality": str(self.quality),
         }
 
 
