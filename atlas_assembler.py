@@ -85,7 +85,7 @@ class AtlasAssembler(Pipeline):
             "--window-size",
             type=int,
             metavar="INT",
-            default=5,
+            default=4,
             help="Window size to use for cleaning (filtering) fastq files.",
         )
         self.add_argument(
@@ -93,7 +93,7 @@ class AtlasAssembler(Pipeline):
             "--minimum-length",
             type=int,
             metavar="INT",
-            default=50,
+            default=1000,
             dest="min_read_length",
             help="Minimum length for fastq reads to be kept after trimming.",
         )
@@ -102,7 +102,7 @@ class AtlasAssembler(Pipeline):
             "--quality",
             type=int,
             metavar="INT",  
-            default=20,
+            default=30,
         )
     def _parse_args(self) -> argparse.Namespace:
         args = super()._parse_args()

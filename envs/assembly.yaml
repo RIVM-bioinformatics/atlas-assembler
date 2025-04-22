@@ -1,0 +1,20 @@
+name: assembly
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - any2fasta  # 0.4.2
+  - flye==2.9.2  # variflye 2.9-b1768
+  - pigz  # 2.6
+  - pip  # 22.0.3
+  - pymssql
+  - python  # 3.9.10
+  - samtools==1.14
+  - yaml
+  - biopython
+  - pyyaml
+  - seqiolib
+  - pip:
+      - pycoqc==2.5.2
+      - python-irodsclient
+                 
