@@ -22,6 +22,7 @@ include: "workflow/rules/nanoplot.smk"
 include: "workflow/rules/filtering.smk"
 #include: "workflow/rules/test_sample_sheet.smk"
 # include: "workflow/rules/fastp.smk"
+include: "workflow/rules/kraken2.smk"
 include: "workflow/rules/assemble_and_polish.smk"
 
 localrules:
@@ -36,5 +37,7 @@ rule all:
         expand(OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz", sample=SAMPLES),
         expand(OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz", sample=SAMPLES),
         expand(OUT + "/nanoplot/{sample}/", sample=SAMPLES),
+        expand(OUT + "/kraken2/flye/{sample}/{sample}_read-report.txt", sample=SAMPLES),
+        expand(OUT + "/kraken2/flye/{sample}/{sample}_assembly-report.txt", sample=SAMPLES),
         expand(OUT + "/flye/{sample}/assembly/assembly.fasta", sample=SAMPLES),
    

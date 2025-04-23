@@ -1,24 +1,23 @@
 rule kraken2:
     input:
-        gz_filtlong = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percent_str"] + ".fastq.gz",
-        assembly = OUT + "/{assembler}/{sample}/assembly/assembly.fasta" # Can be the unedited raw fasta file
+        gz_filtlong = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz",
+        assembly = OUT + "/flye/{sample}/assembly/assembly.fasta" # Can be the unedited raw fasta file
     output:
-        read_report = OUT + "/kraken2/{assembler}/{sample}/{sample}_read-report.txt",
-        assembly_report = OUT + "/kraken2/{assembler}/{sample}/{sample}_assembly-report.txt"
+        read_report = OUT + "/kraken2/flye/{sample}/{sample}_read-report.txt",
+        assembly_report = OUT + "/kraken2/flye/{sample}/{sample}_assembly-report.txt"
     conda:
-        "envs/kraken2.yaml"
-    threads: config["threads"]["kraken2"]
-    resources: 
-        max_mb = config["max_mb"]["kraken2"],
-        mem_mb = config["mem_mb"]["kraken2"],
-        runtime_min = config["runtime_min"]["kraken2"]
+        "../../envs/kraken2.yaml"
+    threads: int(config["threads"]["kraken2"])
+    resources:
+        mem_gb = config["mem_gb"]["kraken2"],
+        # runtime_min = config["runtime_min"]["kraken2"]
     params:
-        out_sample = OUT + "/kraken2/{assembler}/{sample}/{sample}",
+        out_sample = OUT + "/kraken2/flye/{sample}/{sample}",
         kraken2_db = config["db_dir"],
     log:
-        OUT + "/log/kraken2/{sample}-{assembler}.log"
+        OUT + "/log/kraken2/{sample}-flye.log"
     benchmark:
-        OUT + "/log/kraken2/kraken2_{sample}-{assembler}.txt"
+        OUT + "/log/kraken2/kraken2_{sample}-flye.txt"
     shell: 
         """
 echo $'\n====================================\n==     PROGRAM VERSIONS USED      ==\n====================================\n' >> {log}; conda list >> {log}
