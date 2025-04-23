@@ -3,7 +3,7 @@ rule filtlong:
         gz_chopper = OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz"
         # gz_chopper = rules.chopper.output.gz_chopper
     output: # If I want to add option to not filter at all (because it has already been done for example) I could make the keep_percent_str to be '_best90' for example. And then if statement for keep_percent flag yes or no.
-        filt_out = temp(OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz")
+        filt_out = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz"
     conda:
         "../../envs/amr_longread.yaml"
     # singularity:
@@ -14,7 +14,7 @@ rule filtlong:
         mem_gb = config["mem_gb"]["chopper"],
         run_time_minutes = config["run_time_minutes"]["chopper"]
     params:
-        filtlong_temp = OUT + "/tmp/temp{sample}.fastq",
+        # filtlong_temp = OUT + "/tmp/temp{sample}.fastq",
         keep_percentage = config["keep_percentage"],
     log:
         OUT + "/log/filtlong/{sample}.log"
@@ -23,14 +23,7 @@ rule filtlong:
     shell: # Write to a temp file because otherwise Snakemake seemed to think the final file had already been created and tried to continue.
         """
 echo $'\n====================================\n==     PROGRAM VERSIONS USED      ==\n====================================\n' >> {log}; conda list >> {log}
-zcat -f {input.gz_chopper} > {params.filtlong_temp} \
-&& \
-filtlong    --min_length 1000 \
-            --keep_percentage {params.keep_percentage} \
-            {params.filtlong_temp} | gzip > {output} \
-            2> {log} \
-&& \
-rm {params.filtlong_temp}*
+filtlong --min_length 1000 --keep_percent {params.keep_percentage} {input.gz_chopper} | gzip > {output.filt_out}
         """
 # cp {params.filtlong_temp}.gz {output} && \
 

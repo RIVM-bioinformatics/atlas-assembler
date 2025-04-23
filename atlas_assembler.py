@@ -45,7 +45,7 @@ class AtlasAssembler(Pipeline):
             "--headcrop",
             type=int,
             metavar="INT",
-            default=0,
+            default=80,
             help="Trim N nucleotodes from the start of a read",
 		)
         self.add_argument(
@@ -53,7 +53,7 @@ class AtlasAssembler(Pipeline):
             "--tailcrop",
             type=int,
             metavar="INT",
-            default=0,
+            default=80,
             help="Trim N nucleotides from N nucleotides from the end of a read",
 		)
         self.add_argument(
@@ -67,9 +67,9 @@ class AtlasAssembler(Pipeline):
         self.add_argument(
             "-kp",
             "--keep-percentage",
-            type=float,
+            type=int,
             metavar="FLOAT",
-            default=0.8,
+            default=80,
             help="Percentage of reads that should be kept after trimming. Default: 0.8",
         )
         self.add_argument(
@@ -102,7 +102,7 @@ class AtlasAssembler(Pipeline):
             "--quality",
             type=int,
             metavar="INT",  
-            default=30,
+            default=10,
         )
     def _parse_args(self) -> argparse.Namespace:
         args = super()._parse_args()

@@ -1,11 +1,13 @@
 rule nanoplot:
     input:
-        fastp = OUT + "/clean_unsorted_fastq/{sample}_p.fastq.gz",
+        # lambda wildcards: SAMPLES[wildcards.sample]["nanopore_input"]
+        # fastp = OUT + "/clean_unsorted_fastq/{sample}_p.fastq.gz",
         # fastq_internal = OUT + "/fastq/chopper/unfiltered_{sample}.fastq",
         # gz_chopper = OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz",
-        # gz_filtlong = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percent_str"] + ".fastq.gz"
+        gz_filtlong = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz"
     output:
-        nano_fastp = directory(OUT + "/nanoplot/fastq_unfiltered/{sample}/"),
+        gz_filtlong = directory(OUT + "/nanoplot/{sample}/"),
+        # nano_fastp = directory(OUT + "/nanoplot/{sample}/"),
         # fastq_internal = OUT + "/nanoplot/fastq_unfiltered/{sample}/{sample}_NanoStats.csv",
         # gz_chopper = OUT + "/nanoplot/gz_chopper/{sample}/{sample}_NanoStats.csv",
         # gz_filtlong = OUT + "/nanoplot/gz_filtlong/{sample}/{sample}_NanoStats.csv",
@@ -22,5 +24,5 @@ rule nanoplot:
     shell: # Only when all 3 NanoPlot reports have been generated can the edit python script start - So yeah they run sequentially now
         """
 echo $'\n====================================\n==     PROGRAM VERSIONS USED      ==\n====================================\n' >> {log}; conda list >> {log}
-NanoPlot --fastq {input.fastp} --outdir {output.nano_fastp} 
+NanoPlot --fastq {input.gz_filtlong} --outdir {output.gz_filtlong} 
         """

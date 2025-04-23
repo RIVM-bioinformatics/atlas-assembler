@@ -1,7 +1,8 @@
 rule flye:
     input:
-        OUT + "/clean_unsorted_fastq/{sample}_p.fastq.gz"
-        # OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percent_str"] + ".fastq.gz"
+        # lambda wildcards: SAMPLES[wildcards.sample]["nanopore_input"]
+        # OUT + "/clean_unsorted_fastq/{sample}_p.fastq.gz"
+        OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz"
     output:
         OUT + "/flye/{sample}/assembly/assembly.fasta",
     message:
