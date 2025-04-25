@@ -26,3 +26,36 @@ flye --nano-raw {input} \
     --out-dir {params.outdir} \
     2> {log}
         """
+
+# rule medaka_flye:
+#     input:
+#         assembly = OUT + "/flye/{sample}/assembly/assembly.fasta",
+#         longreadset = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz"
+#     output:
+#         # OUT + "/medaka/{sample}/flye/assembly.fasta"
+#         # directory(OUT + "/medaka/{sample}/flye"),
+#         assembly_out = OUT + "/medaka/{sample}/flye/assembly.fasta"
+#     conda:
+#         "../../envs/medaka.yaml"
+#     threads: int(config["threads"]["medaka"]) # 
+#     resources: 
+#         # max_mb = config["max_mb"]["medaka"],
+#         mem_gb = config["mem_gb"]["medaka"], # 
+#         # runtime_min = config["runtime_min"]["medaka"] # 
+#     params:
+#         outdir = OUT + "/medaka/{sample}/flye",
+#         model = config["medaka_model"],
+#         rounds = config["medaka_rounds"]
+#     log:
+#         OUT + "/log/medaka/medaka_flye_{sample}.log"
+#     benchmark:
+#         OUT + "/log/benchmark/medaka/medaka_flye_{sample}.txt"
+#     shell:
+#         """
+# echo $'\n====================================\n==     PROGRAM VERSIONS USED      ==\n====================================\n' >> {log}; conda list >> {log}
+#     medaka_consensus -i {input.longreadset} \
+#         -d {input.assembly} \
+#         -o {params.outdir}\
+#         -t {threads} \
+#         2> {log}
+#         """

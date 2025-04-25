@@ -104,6 +104,23 @@ class AtlasAssembler(Pipeline):
             metavar="INT",  
             default=10,
         )
+        self.add_argument(
+        "--medaka_rounds",
+        metavar="Val",
+        help="Number of medaka rounds for polishing in case of supplying medaka flag, default 1",
+        type=str,
+        nargs='?',
+        const='1',
+        default='1',
+        required=False,
+    )
+        self.add_argument(
+            "--medaka_model",
+            metavar="Name",
+            help="Medaka model to use when polishing, will also be supplied through the start_longread_assembly.sh",
+            type=str,
+            required=False,
+        )
     def _parse_args(self) -> argparse.Namespace:
         args = super()._parse_args()
 
@@ -117,6 +134,8 @@ class AtlasAssembler(Pipeline):
         self.window_size: int = args.window_size
         self.min_read_length: int = args.min_read_length
         self.quality: int = args.quality
+        self.medaka_rounds: int = args.medaka_rounds
+        self.medaka_model: str = args.medaka_model
 
         return args
     
@@ -158,6 +177,8 @@ class AtlasAssembler(Pipeline):
             "window_size": str(self.window_size),
             "min_read_length": str(self.min_read_length),
             "quality": str(self.quality),
+            "medaka_rounds": str(self.medaka_rounds),
+            "medaka_model": str(self.medaka_model),
         }
 
 

@@ -4,7 +4,10 @@ rule kraken2:
         assembly = OUT + "/flye/{sample}/assembly/assembly.fasta" # Can be the unedited raw fasta file
     output:
         read_report = OUT + "/kraken2/flye/{sample}/{sample}_read-report.txt",
-        assembly_report = OUT + "/kraken2/flye/{sample}/{sample}_assembly-report.txt"
+        assembly_report = OUT + "/kraken2/flye/{sample}/{sample}_assembly-report.txt",
+        # kraken2_kreport=temp(OUT + "/kraken2/flye/{sample}/{sample}.kreport2"),
+        # bracken_s=OUT + "/kraken2/flye/{sample}/{sample}_species_content.txt",
+        # bracken_kreport=OUT + "/kraken2/flye/{sample}/{sample}_bracken_species.kreport2",
     conda:
         "../../envs/kraken2.yaml"
     threads: int(config["threads"]["kraken2"])
