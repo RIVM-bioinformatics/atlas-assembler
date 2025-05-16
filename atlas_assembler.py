@@ -21,17 +21,55 @@ def main() -> None:
     atlas_assembler = AtlasAssembler()
     atlas_assembler.run()
 
+def get_suppported_checkm_genera() -> list[str]:
+    with open(
+        Path(__file__).parent.joinpath("files", "accepted_genera_checkm.txt"), mode="r"
+    ) as f:
+        return [g.strip().lower() for g in f.readlines()]
+
+
 @dataclass
 class AtlasAssembler(Pipeline):
     pipeline_name: str = __package_name__
     pipeline_version: str = __version__
     input_type: str = "fastq"
+    supported_genera: list[str] = field(default_factory=get_suppported_checkm_genera)
 
     def _add_args_to_parser(self) -> None:
         super()._add_args_to_parser()
+        supported_genera = self.supported_genera
+
+        class HelpGeneraAction(argparse.BooleanOptionalAction):
+            def __call__(self, *args, **kwargs) -> None:  # type: ignore
+                print("\n".join([f"The accepted genera are:"] + supported_genera))
+                exit(0)
+
+
 
         self.parser.description = "Atlas Assembler pipeline for assembly of sigle read ONT sequencing data"
-        
+        self.add_argument(
+            "--help-genera",
+            action=HelpGeneraAction,
+            help="Prints the genera accepted by this pipeline.",
+        )
+        self.add_argument(
+            "-g",
+            "--genus",
+            type=str.lower,
+            choices=self.supported_genera,
+            default=None,
+            metavar="GENUS",
+            help="Genus of the samples to be analyzed. If metadata is given, the genus in the metadata will overwrite the one given through this option.",
+        )
+        self.add_argument(
+            "-m",
+            "--metadata",
+            type=Path,
+            default=None,
+            metavar="FILE",
+            dest="metadata_file",
+            help="Relative or absolute path to a .csv file. If provided, it must contain at least one column with the 'Sample' name (name of the file but removing _R1.fastq.gz) and a column called 'Genus' (mind the capital in the first letter). The genus provided will be used to choose the reference genome to analyze de QC of the de novo assembly.",
+        )
         self.add_argument(
             "-d",
             "--db-dir",
@@ -126,6 +164,8 @@ class AtlasAssembler(Pipeline):
 
         # Optional arguments are loaded into self here
         self.db_dir: Path = args.db_dir.resolve()
+        self.metadata_file: Optional[Path] = args.metadata_file
+        self.genus: Optional[str] = args.genus
         self.headcrop: int = args.headcrop
         self.tailcrop: int = args.tailcrop
         self.length: int = args.length
@@ -143,6 +183,18 @@ class AtlasAssembler(Pipeline):
     def example_class_method(self):
         print(f"example option is set to {self.example}")
 
+    def update_sample_dict_with_metadata(self) -> None:
+        self.get_metadata_from_csv_file(
+            filepath=self.metadata_file, expected_colnames=["sample", "genus"]
+        )
+        for sample, properties in self.sample_dict.items():
+            try:
+                properties["genus"] = (
+                    self.juno_metadata[sample]["genus"].strip().lower()
+                )
+            except (KeyError, TypeError, AttributeError):
+                properties["genus"] = self.genus  # type: ignore
+
     def setup(self) -> None:
         super().setup()
         self.snakemake_args["use_conda"] = True
@@ -152,6 +204,8 @@ class AtlasAssembler(Pipeline):
                     self.snakemake_args["singularity_args"]
                 ] # paths that singularity should be able to read from can be bound by adding to the above list
             )
+        
+        self.update_sample_dict_with_metadata()
 
         # Extra class methods for this pipeline can be invoked here
         # if self.example:
@@ -169,6 +223,7 @@ class AtlasAssembler(Pipeline):
             "exclusion_file": str(self.exclusion_file),
             # "example": str(self.example), # other user parameters can be included in user_parameters.yaml here
             "db_dir": str(self.db_dir),
+            "genus": self.genus,
             "headcrop": str(self.headcrop),
             "tailcrop": str(self.tailcrop),
             "length": str(self.length),

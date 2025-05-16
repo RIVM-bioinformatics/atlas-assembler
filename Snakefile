@@ -19,9 +19,12 @@ IN = config["input_dir"]
 include: "workflow/rules/nanoplot.smk"
 include: "workflow/rules/filtering.smk"
 # include: "workflow/rules/fastp.smk"
-include: "workflow/rules/kraken2.smk"
+# include: "workflow/rules/kraken2.smk"
+include: "workflow/rules/identify_species.smk"
 include: "workflow/rules/assemble_and_polish.smk"
 include: "workflow/rules/post_qc.smk"
+include: "workflow/rules/run_checkm.smk"
+include: "workflow/rules/parse_checkm.smk"
 include: "workflow/rules/multiqc.smk"
 
 localrules:
@@ -36,13 +39,17 @@ rule all:
         expand(OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz", sample=SAMPLES),
         expand(OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz", sample=SAMPLES),
         expand(OUT + "/nanoplot/{sample}/", sample=SAMPLES),
-        expand(OUT + "/kraken2/flye/{sample}/{sample}_read-report.txt", sample=SAMPLES),
-        expand(OUT + "/kraken2/flye/{sample}/{sample}_assembly-report.txt", sample=SAMPLES),
+        expand(OUT + "/kraken2/reads/{sample}/{sample}_species_content.txt", sample=SAMPLES),
+        expand(OUT + "/kraken2/reads/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
+        # expand(OUT + "/kraken2/flye/{sample}/{sample}_read-report.txt", sample=SAMPLES),
+        # expand(OUT + "/kraken2/flye/{sample}/{sample}_assembly-report.txt", sample=SAMPLES),
         expand(OUT + "/flye/{sample}/assembly/assembly.fasta", sample=SAMPLES),
         # expand(OUT + "/medaka/{sample}/flye/assembly.fasta", sample=SAMPLES),
         # expand(OUT + "/medaka/{sample}/flye", sample=SAMPLES),
+        expand(OUT + "/flye_assembly/checkm/per_sample/{sample}/checkm_{sample}.tsv", sample=SAMPLES),
         expand(OUT + "/flye_assembly/quast/{sample}/report.tsv", sample=SAMPLES),
         expand(OUT + "/flye_assembly/quast/{sample}/transposed_report.tsv", sample=SAMPLES),
+        OUT + "/identify_species/top1_species_multireport.csv",
         expand(OUT + "/multiqc/multiqc.html", sample=SAMPLES),
         expand(OUT + "/multiqc/multiqc_data/multiqc_data.json", sample=SAMPLES),
    
