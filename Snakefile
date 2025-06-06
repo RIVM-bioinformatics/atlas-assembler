@@ -49,6 +49,8 @@ rule all:
         expand(OUT + "/flye_assembly/checkm/per_sample/{sample}/checkm_{sample}.tsv", sample=SAMPLES),
         expand(OUT + "/flye_assembly/quast/{sample}/report.tsv", sample=SAMPLES),
         expand(OUT + "/flye_assembly/quast/{sample}/transposed_report.tsv", sample=SAMPLES),
+        expand(OUT + "/busco/{sample}/", sample=SAMPLES),
+        expand(OUT + "/busco/{sample}/busco_results/short_summary.specific.bacteria_odb10.busco_results.txt", sample=SAMPLES),
         OUT + "/identify_species/top1_species_multireport.csv",
         expand(OUT + "/multiqc/multiqc.html", sample=SAMPLES),
         expand(OUT + "/multiqc/multiqc_data/multiqc_data.json", sample=SAMPLES),

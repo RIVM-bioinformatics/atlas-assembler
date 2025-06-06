@@ -21,3 +21,31 @@ rule run_quast:
         """
         quast.py --threads {threads} {input.assembly} --output-dir {params.output_dir} > {log}
         """
+
+rule busco:
+    input:
+        contigs = OUT + "/flye/{sample}/assembly/assembly.fasta"
+    output:
+        # OUT + directory("/busco/{sample}/")
+        busco_out = directory(OUT + "/busco/{sample}/"),
+        short_summary = OUT + "/busco/{sample}/busco_results/short_summary.specific.bacteria_odb10.busco_results.txt"
+    message:
+        "Running BUSCO for {wildcards.sample}"
+    conda:
+        "../../envs/busco.yaml"
+    log:
+        OUT + "/log/busco/{sample}/busco.out"
+    params:
+        mode = "genome",
+        lineage = "bacteria_odb10",
+        short_summary_filename = "busco_results",
+        # options = config['busco']['options']
+    threads:
+        config["threads"]["busco"]
+    resources:
+        mem_gb=config["mem_gb"]["busco"]
+    shell:
+        """
+        busco -i {input.contigs} --out_path {output.busco_out} -l {params.lineage} -o {params.short_summary_filename}\
+        -m {params.mode} -f 
+        """

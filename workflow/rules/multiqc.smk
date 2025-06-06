@@ -3,6 +3,7 @@ rule multiqc:
        expand(OUT + "/kraken2/flye_assembly/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
        expand(OUT + "/flye_assembly/quast/{sample}/report.tsv", sample=SAMPLES),
        expand(OUT + "/flye_assembly/checkm/per_sample/{sample}/checkm_{sample}.tsv", sample=SAMPLES),
+       expand(OUT + "/busco/{sample}/busco_results/short_summary.specific.bacteria_odb10.busco_results.txt", sample=SAMPLES),
     output:
         OUT + "/multiqc/multiqc.html",
         phred=OUT + "/multiqc/multiqc_data/multiqc_data.json",
