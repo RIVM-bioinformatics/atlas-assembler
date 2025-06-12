@@ -33,7 +33,6 @@ include: "workflow/rules/multiqc.smk"
 localrules:
     all
 
-
 rule all:
     input:
         # expand(OUT + "/clean_unsorted_fastq/{sample}_p.fastq.gz", sample=SAMPLES),

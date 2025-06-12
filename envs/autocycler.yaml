@@ -1,4 +1,4 @@
-name: autocycler_test
+name: autocycler
 channels:
   - conda-forge
   - bioconda
