@@ -7,6 +7,7 @@ rule nanoplot:
         gz_filtlong = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz"
     output:
         gz_filtlong = directory(OUT + "/nanoplot/{sample}/"),
+        stats = OUT + "/nanoplot/{sample}/NanoStats.txt",
         # nano_fastp = directory(OUT + "/nanoplot/{sample}/"),
         # fastq_internal = OUT + "/nanoplot/fastq_unfiltered/{sample}/{sample}_NanoStats.csv",
         # gz_chopper = OUT + "/nanoplot/gz_chopper/{sample}/{sample}_NanoStats.csv",

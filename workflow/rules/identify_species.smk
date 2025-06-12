@@ -41,7 +41,7 @@ rule identify_species_reads:
 
 rule identify_species:
     input:
-        assembly = OUT + "/flye/{sample}/assembly/assembly.fasta", # Can be the unedited raw fasta file
+        assembly = OUT + "/flye/{sample}/assembly/{sample}_assembly.fasta", # Can be the unedited raw fasta file
     output:
         # read_report = OUT + "/kraken2/flye/{sample}/{sample}_read-report.txt",
         kraken2_kreport = OUT + "/kraken2/flye_assembly/{sample}/{sample}.kreport2",

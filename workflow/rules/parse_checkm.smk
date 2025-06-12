@@ -2,11 +2,11 @@ rule parse_checkm:
     input:
         expand(
             OUT
-            + "/flye_assembly/checkm/per_sample/{sample}/checkm_{sample}.tsv",
+            + "/qc_flye_assembly/checkm/per_sample/{sample}/checkm_{sample}.tsv",
             sample=SAMPLES,
         ),
     output:
-        OUT + "/flye_assembly/checkm/checkm_report.tsv",
+        OUT + "/qc_flye_assembly/checkm/checkm_report.tsv",
     message:
         "Parsing the results of CheckM and making a multireport."
     threads: config["threads"]["parsing"]

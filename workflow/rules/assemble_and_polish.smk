@@ -2,9 +2,9 @@ rule flye:
     input:
         # lambda wildcards: SAMPLES[wildcards.sample]["nanopore_input"]
         # OUT + "/clean_unsorted_fastq/{sample}_p.fastq.gz"
-        OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz"
+        OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz",
     output:
-        OUT + "/flye/{sample}/assembly/assembly.fasta",
+        contig = OUT + "/flye/{sample}/assembly/{sample}_assembly.fasta",
     message:
         "Performing assembly with Flye for {wildcards.sample}."
     conda:
@@ -13,7 +13,7 @@ rule flye:
     resources: 
         mem_gb=config["mem_gb"]["flye"],
     params:
-        outdir = OUT + "/flye/{sample}/assembly/"
+        output_dir = OUT + "/flye/{sample}/assembly/"
     log:
         OUT + "/log/flye/{sample}_assembly.log"
     benchmark:
@@ -21,10 +21,11 @@ rule flye:
     shell:
         """
 echo $'\n====================================\n==     PROGRAM VERSIONS USED      ==\n====================================\n' >> {log}; conda list >> {log}
+outdir="$(dirname "{output.contig}")"
 flye --nano-raw {input} \
     --threads {threads} \
-    --out-dir {params.outdir} \
-    2> {log}
+    --out-dir {params.output_dir} \
+    2> {log} && mv ${{outdir}}/assembly.fasta {output.contig}
         """
 
 # rule medaka_flye:

@@ -5,7 +5,7 @@ rule select_genus_checkm:
         list_accepted_genera="files/accepted_genera_checkm.txt",
     output:
         selected_genus=OUT
-        + "/flye_assembly/checkm/per_sample/{sample}/selected_genus.txt",
+        + "/qc_flye_assembly/checkm/per_sample/{sample}/selected_genus.txt",
     message:
         "Selecting genus for CheckM for {wildcards.sample}."
     threads: config["threads"]["checkm"]
@@ -14,7 +14,7 @@ rule select_genus_checkm:
     params:
         genus=lambda wildcards: SAMPLES[wildcards.sample]["genus"],
     log:
-        OUT + "/log/flye_assembly/select_genus_checkm_{sample}.log",
+        OUT + "/log/qc_flye_assembly/select_genus_checkm_{sample}.log",
     shell:
         """
         python workflow/scripts/select_genus_checkm.py \
@@ -25,10 +25,10 @@ rule select_genus_checkm:
 
 rule checkm:
     input:
-        assembly=OUT + "/flye/{sample}/assembly/assembly.fasta",
-        selected_genus=OUT + "/flye_assembly/checkm/per_sample/{sample}/selected_genus.txt",
+        assembly=OUT + "/flye/{sample}/assembly/{sample}_assembly.fasta",
+        selected_genus=OUT + "/qc_flye_assembly/checkm/per_sample/{sample}/selected_genus.txt",
     output:
-        result=OUT + "/flye_assembly/checkm/per_sample/{sample}/checkm_{sample}.tsv",
+        result=OUT + "/qc_flye_assembly/checkm/per_sample/{sample}/checkm_{sample}.tsv",
         # tmp_dir1=temp(directory(OUT + "/flye_assembly/checkm/per_sample/{sample}/bins")),
         # tmp_dir2=temp(directory(OUT + "/flye_assembly/checkm/per_sample/{sample}/storage")),
     message:
@@ -40,9 +40,9 @@ rule checkm:
         mem_gb=config["mem_gb"]["checkm"],
     params:
         input_dir=OUT + "/flye/{sample}/",
-        output_dir=OUT + "/flye_assembly/checkm/per_sample/{sample}",
+        output_dir=OUT + "/qc_flye_assembly/checkm/per_sample/{sample}",
     log:
-        OUT + "/log/flye_assembly/checkm_{sample}.log",
+        OUT + "/log/qc_flye_assembly/checkm_{sample}.log",
     shell:
         """
        
