@@ -1,9 +1,10 @@
 import yaml
 import os
+import glob
 
 rule determine_genome_size:
     input:
-        OUT + "/fastq/chopper/unfiltered_{sample}.fastq"
+        lambda wildcards: SAMPLES[wildcards.sample]["nanopore_input"],
     output:
         OUT + "/autocycler/{sample}/genome_size.txt"
     conda:
@@ -11,7 +12,7 @@ rule determine_genome_size:
     threads: config["threads"]["genome_size"] # 8
     resources: 
         mem_gb = config["mem_gb"]["genome_size"], # 48
-        runtime_minutes = config["runtime_minutes"]["genome_size"] # 60
+        run_time_minutes = config["run_time_minutes"]["genome_size"] # 60
     params:
         outdir_sample = OUT + "/autocycler/{sample}"
     log:
@@ -20,12 +21,16 @@ rule determine_genome_size:
         OUT + "/log/benchmark/autocycler/{sample}/determine_genome_size.txt"
     shell:
         """
-        workflow/scripts/genome_size_raven.sh {input} {threads} >> {params.outdir_sample}/genome_size.txt
+       workflow/scripts/genome_size_raven.sh {input}/*fastq* {threads} >> {params.outdir_sample}/genome_size.txt
         """
 
 rule autocycler_subsample:
     input:
         # fastq = OUT + "/fastq/chopper/unfiltered_{sample}.fastq",
+        fastq = lambda wildcards: glob.glob(
+            os.path.join(SAMPLES[wildcards.sample]["nanopore_input"], "*.fastq*")
+        )[0],
+        # fastq = lambda wildcards: SAMPLES[wildcards.sample]["nanopore_input"],
         gz_chopper = OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz",
         genome_size = OUT + "/autocycler/{sample}/genome_size.txt"
     output: # This is the only part that is essentially hardcoded because this says you explicitly use 4 subsets - You'd have to script the output otherwise and multiply by n of subsets used.
@@ -39,7 +44,7 @@ rule autocycler_subsample:
     threads: config["threads"]["default"] # 1
     resources: 
         mem_gb = config["mem_gb"]["default"], # 4
-        runtime_minutes = config["runtime_minutes"]["default"] # 30
+        run_time_minutes = config["run_time_minutes"]["default"] # 30
     params:
         outdir_sample = OUT + "/autocycler/{sample}"
     log:
@@ -49,7 +54,7 @@ rule autocycler_subsample:
     shell:
         """
 genome_size=$(<{input.genome_size})
-{AUTOCYCLER_EXE} subsample --reads {input.fastq} --out_dir {params.outdir_sample}/subsampled_reads --genome_size ${{genome_size}} \
+autocycler subsample --reads {input.fastq} --out_dir {params.outdir_sample}/subsampled_reads --genome_size ${{genome_size}} \
 && touch {output.completed}
         """
 
@@ -64,7 +69,7 @@ rule autocycler_canu:
     threads: config["threads"]["canu"] # 18
     resources: 
         mem_gb = config["mem_gb"]["canu"], # 24
-        runtime_minutes = config["runtime_minutes"]["canu"] # 600
+        run_time_minutes = config["run_time_minutes"]["canu"] # 600
     params:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
         tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/canu_{subset}",
@@ -86,7 +91,7 @@ cp {params.tmp_fasta_name}.fasta {output}
 rule autocycler_flye:
     input:
         fastq = OUT + "/autocycler/{sample}/subsampled_reads/sample_{subset}.fastq",
-        genome_size = OUT + "/autocycler/{sample}/genome-size.txt"
+        genome_size = OUT + "/autocycler/{sample}/genome_size.txt"
     output:
         OUT + "/autocycler/{sample}/assemblies/flye_{subset}.fasta"
     conda:
@@ -94,7 +99,7 @@ rule autocycler_flye:
     threads: config["threads"]["flye"] # 8
     resources: 
         mem_gb = config["mem_gb"]["flye"], # 16
-        runtime_minutes = lambda wildcards, attempt: determine_runtime(wildcards, attempt, config["runtime_minutes"]["flye"]),
+        run_time_minutes = lambda wildcards, attempt: determine_runtime(wildcards, attempt, config["run_time_minutes"]["flye"]),
         retry_count = lambda wildcards, attempt=1: determine_final_try(wildcards, attempt)
         # retry_count = determine_final_try
         # runtime_min = config["runtime_min"]["flye"] # 60
@@ -133,7 +138,7 @@ rule autocycler_miniasm:
     threads: config["threads"]["miniasm"] # 8
     resources: 
         mem_gb = config["mem_gb"]["miniasm"], # 16
-        runtime_minutes = config["runtime_minutes"]["miniasm"] # 60
+        run_time_minutes = config["run_time_minutes"]["miniasm"] # 60
     params:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
         tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/miniasm_{subset}",
@@ -163,7 +168,7 @@ rule autocycler_necat:
     threads: config["threads"]["necat"] # 8
     resources: 
         mem_gb = config["mem_gb"]["necat"], # 24
-        runtime_minutes = config["runtime_minutes"]["necat"] # 60
+        run_time_minutes = config["run_time_minutes"]["necat"] # 60
     params:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
         tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/necat_{subset}",
@@ -193,7 +198,7 @@ rule autocycler_nextdenovo:
     threads: config["threads"]["nextdenovo"] # 8
     resources: 
         mem_gb = config["mem_gb"]["nextdenovo"], # 12
-        runtime_minutes = config["runtime_minutes"]["nextdenovo"] # 60
+        run_time_minutes = config["run_time_minutes"]["nextdenovo"] # 60
     params:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
         tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/nextdenovo_{subset}",
@@ -223,7 +228,7 @@ rule autocycler_raven:
     threads: config["threads"]["raven"] # 8
     resources: 
         mem_gb = lambda wildcards, attempt: determine_memory(wildcards, attempt, config["mem_gb"]["raven"]), # 12
-        runtime_minutes = config["runtime_minutes"]["raven"], # 60
+        run_time_minutes = config["run_time_minutes"]["raven"], # 60
         retry_count = lambda wildcards, attempt=1: determine_final_try(wildcards, attempt)
     params:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
@@ -259,7 +264,7 @@ rule autocycler_collect:
     threads: config["threads"]["default"] # 1
     resources: 
         mem_gb = config["mem_gb"]["default"], # 5
-        runtime_minutes = config["runtime_minutes"]["default"] # 30
+        run_time_minutes = config["run_time_minutes"]["default"] # 30
     params:
         workdir = OUT
     log:
@@ -288,9 +293,9 @@ rule autocycler_compress:
     threads: config["threads"]["default"] # 1
     resources: 
         mem_gb = config["mem_gb"]["default"], # 4
-        runtime_minutes = config["runtime_minutes"]["default"] # 30
+        run_time_minutes = config["run_time_minutes"]["default"] # 30
     params:
-        autocycler_exe = config["autocycler_executable"],
+        # autocycler_exe = config["autocycler_executable"],
         autocycler_dir = OUT + "/autocycler/{sample}/autocycler_out/",
         assembly_dir = OUT + "/autocycler/{sample}/assemblies/"
     log:
@@ -299,7 +304,7 @@ rule autocycler_compress:
         OUT + "/log/benchmark/autocycler/{sample}/compress.txt"
     shell:
         """
-{params.autocycler_exe} compress -i {params.assembly_dir} -a {params.autocycler_dir} \
+autocycler compress -i {params.assembly_dir} -a {params.autocycler_dir} \
 && touch {output}
         """
 
@@ -313,10 +318,9 @@ rule autocycler_cluster:
     threads: config["threads"]["default"] # 1
     resources: 
         mem_gb = config["mem_gb"]["default"], # 4
-        max_gb = config["max_gb"]["default"], # 5
-        runtime_minutes = config["runtime_minutes"]["default"] # 30
+        run_time_minutes = config["run_time_minutes"]["default"] # 30
     params:
-        autocycler_exe = config["autocycler_executable"],
+        # autocycler_exe = config["autocycler_executable"],
         autocycler_dir = OUT + "/autocycler/{sample}/autocycler_out/"
     log:
         OUT + "/log/autocycler/{sample}/cluster.log"
@@ -324,7 +328,7 @@ rule autocycler_cluster:
         OUT + "/log/benchmark/autocycler/{sample}/cluster.txt"
     shell:
         """
-{params.autocycler_exe} cluster -a {params.autocycler_dir} \
+autocycler cluster -a {params.autocycler_dir} \
 && touch {output}
         """
 
@@ -338,9 +342,9 @@ rule autocycler_trim:
     threads: config["threads"]["default"] # 1
     resources: 
         mem_gb = config["mem_gb"]["default"], # 4
-        runtime_minutes = config["runtime_minutes"]["default"] # 30
+        run_time_minutes = config["run_time_minutes"]["default"] # 30
     params:
-        autocycler_exe = config["autocycler_executable"],
+        # autocycler_exe = config["autocycler_executable"],
         autocycler_qc_pass_dir = OUT + "/autocycler/{sample}/autocycler_out/clustering/qc_pass"
     log:
         OUT + "/log/autocycler/{sample}/trim.log"
@@ -349,7 +353,7 @@ rule autocycler_trim:
     shell:
         """
 for c in {params.autocycler_qc_pass_dir}/cluster_*; do
-{params.autocycler_exe} trim -c ${{c}}
+autocycler trim -c ${{c}}
 done \
 && touch {output}
         """
@@ -364,9 +368,9 @@ rule autocycler_resolve:
     threads: config["threads"]["default"] # 1
     resources: 
         mem_gb = config["mem_gb"]["default"], # 4
-        runtime_minutes = config["runtime_minutes"]["default"] # 30
+        run_time_minutes = config["run_time_minutes"]["default"] # 30
     params:
-        autocycler_exe = config["autocycler_executable"],
+        # autocycler_exe = config["autocycler_executable"],
         autocycler_qc_pass_dir = OUT + "/autocycler/{sample}/autocycler_out/clustering/qc_pass"
     log:
         OUT + "/log/autocycler/{sample}/resolve.log"
@@ -375,7 +379,7 @@ rule autocycler_resolve:
     shell:
         """
 for c in {params.autocycler_qc_pass_dir}/cluster_*; do
-{params.autocycler_exe} resolve -c ${{c}}
+autocycler resolve -c ${{c}}
 done \
 && touch {output}
         """
@@ -389,10 +393,10 @@ rule autocycler_combine:
         "../../envs/autocycler.yaml"
     threads: config["threads"]["default"] # 1
     resources: 
-        mem_gb = config["mem_mb"]["default"], # 4
-        runtime_minutes = config["runtime_minutes"]["default"] # 30
+        mem_gb = config["mem_gb"]["default"], # 4
+        run_time_minutes = config["run_time_minutes"]["default"] # 30
     params:
-        autocycler_exe = config["autocycler_executable"],
+        # autocycler_exe = config["autocycler_executable"],
         autocycler_dir = OUT + "/autocycler/{sample}/autocycler_out/",
         autocycler_qc_pass_dir = OUT + "/autocycler/{sample}/autocycler_out/clustering/qc_pass",
         tmp_final_name = OUT + "/autocycler/{sample}/autocycler_out/consensus_assembly.fasta"
@@ -402,7 +406,7 @@ rule autocycler_combine:
         OUT + "/log/benchmark/autocycler/{sample}/combine.txt"
     shell:
         """
-{params.autocycler_exe} combine -a {params.autocycler_dir} -i {params.autocycler_qc_pass_dir}/cluster_*/5_final.gfa && \
+autocycler combine -a {params.autocycler_dir} -i {params.autocycler_qc_pass_dir}/cluster_*/5_final.gfa && \
 sleep 30 && \
 cp {params.tmp_final_name} {output}
         """

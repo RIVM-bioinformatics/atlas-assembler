@@ -1,30 +1,30 @@
-rule filtlong:
-    input:
-        gz_chopper = OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz"
-        # gz_chopper = rules.chopper.output.gz_chopper
-    output: # If I want to add option to not filter at all (because it has already been done for example) I could make the keep_percent_str to be '_best90' for example. And then if statement for keep_percent flag yes or no.
-        filt_out = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz"
-    conda:
-        "../../envs/amr_longread.yaml"
-    # singularity:
-    #     singularity run https://depot.galaxyproject.org/singularity/filtlong:0.2.1--hd03093a_1
-    threads: config["threads"]["chopper"]
-    resources: 
-        # max_mb = config["max_mb"]["default"],
-        mem_gb = config["mem_gb"]["chopper"],
-        run_time_minutes = config["run_time_minutes"]["chopper"]
-    params:
-        # filtlong_temp = OUT + "/tmp/temp{sample}.fastq",
-        keep_percentage = config["keep_percentage"],
-    log:
-        OUT + "/log/filtlong/{sample}.log"
-    benchmark:
-        OUT + "/log/benchmark/filtlong/{sample}.txt"
-    shell: # Write to a temp file because otherwise Snakemake seemed to think the final file had already been created and tried to continue.
-        """
-echo $'\n====================================\n==     PROGRAM VERSIONS USED      ==\n====================================\n' >> {log}; conda list >> {log}
-filtlong --min_length 1000 --keep_percent {params.keep_percentage} {input.gz_chopper} | gzip > {output.filt_out}
-        """
+# rule filtlong:
+#     input:
+#         gz_chopper = OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz"
+#         # gz_chopper = rules.chopper.output.gz_chopper
+#     output: # If I want to add option to not filter at all (because it has already been done for example) I could make the keep_percent_str to be '_best90' for example. And then if statement for keep_percent flag yes or no.
+#         filt_out = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz"
+#     conda:
+#         "../../envs/amr_longread.yaml"
+#     # singularity:
+#     #     singularity run https://depot.galaxyproject.org/singularity/filtlong:0.2.1--hd03093a_1
+#     threads: config["threads"]["chopper"]
+#     resources: 
+#         # max_mb = config["max_mb"]["default"],
+#         mem_gb = config["mem_gb"]["chopper"],
+#         run_time_minutes = config["run_time_minutes"]["chopper"]
+#     params:
+#         # filtlong_temp = OUT + "/tmp/temp{sample}.fastq",
+#         keep_percentage = config["keep_percentage"],
+#     log:
+#         OUT + "/log/filtlong/{sample}.log"
+#     benchmark:
+#         OUT + "/log/benchmark/filtlong/{sample}.txt"
+#     shell: # Write to a temp file because otherwise Snakemake seemed to think the final file had already been created and tried to continue.
+#         """
+# echo $'\n====================================\n==     PROGRAM VERSIONS USED      ==\n====================================\n' >> {log}; conda list >> {log}
+# filtlong --min_length 1000 --keep_percent {params.keep_percentage} {input.gz_chopper} | gzip > {output.filt_out}
+#         """
 # cp {params.filtlong_temp}.gz {output} && \
 
 rule chopper:

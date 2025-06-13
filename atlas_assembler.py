@@ -159,6 +159,14 @@ class AtlasAssembler(Pipeline):
             type=str,
             required=False,
         )
+        self.add_argument(
+        "--auto_exe",
+        metavar="Name",
+        help="Path to Autocycler executable",
+        default='Unknown',
+        type=str,
+        required=False,
+    )
     def _parse_args(self) -> argparse.Namespace:
         args = super()._parse_args()
 
@@ -176,6 +184,7 @@ class AtlasAssembler(Pipeline):
         self.quality: int = args.quality
         self.medaka_rounds: int = args.medaka_rounds
         self.medaka_model: str = args.medaka_model
+        self.auto_exe: str = args.auto_exe
 
         return args
     
@@ -198,6 +207,7 @@ class AtlasAssembler(Pipeline):
     def setup(self) -> None:
         super().setup()
         self.snakemake_args["use_conda"] = True
+        self.snakemake_args["latency_wait"] = 120
         if self.snakemake_args["use_singularity"]:
             self.snakemake_args["singularity_args"] = " ".join(
                 [
@@ -234,6 +244,7 @@ class AtlasAssembler(Pipeline):
             "quality": str(self.quality),
             "medaka_rounds": str(self.medaka_rounds),
             "medaka_model": str(self.medaka_model),
+            "auto_exe": str(self.auto_exe),
         }
 
 
