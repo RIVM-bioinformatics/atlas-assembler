@@ -80,9 +80,10 @@ rule autocycler_canu:
         OUT + "/log/benchmark/autocycler/{sample}/canu_{subset}.txt"
     shell:
         """
+export PATH=$PATH:workflow/scripts
 genome_size=$(<{input.genome_size})
 mkdir -p {params.tmp_fasta_dir}
-canu.sh {input.fastq} {params.tmp_fasta_name} {threads} ${{genome_size}} && \
+workflow/scripts/canu.sh {input.fastq} {params.tmp_fasta_name} {threads} ${{genome_size}} && \
 sleep 30 && \
 mkdir -p {params.assembly_dir} && \
 cp {params.tmp_fasta_name}.fasta {output}
@@ -99,8 +100,8 @@ rule autocycler_flye:
     threads: config["threads"]["flye"] # 8
     resources: 
         mem_gb = config["mem_gb"]["flye"], # 16
-        run_time_minutes = lambda wildcards, attempt: determine_runtime(wildcards, attempt, config["run_time_minutes"]["flye"]),
-        retry_count = lambda wildcards, attempt=1: determine_final_try(wildcards, attempt)
+        # run_time_minutes = lambda wildcards, attempt: determine_runtime(wildcards, attempt, config["run_time_minutes"]["flye"]),
+        # retry_count = lambda wildcards, attempt=1: determine_final_try(wildcards, attempt)
         # retry_count = determine_final_try
         # runtime_min = config["runtime_min"]["flye"] # 60
     params:
@@ -113,18 +114,12 @@ rule autocycler_flye:
         OUT + "/log/benchmark/autocycler/{sample}/flye_{subset}.txt"
     shell:
         """
-if [ {resources.retry_count} == 4 ]; then 
-    if [ ! -f {output} ]; then 
-        touch {output} 
-    fi 
-else 
     genome_size=$(<{input.genome_size})
     mkdir -p {params.tmp_fasta_dir}
-    flye.sh {input.fastq} {params.tmp_fasta_name} {threads} ${{genome_size}} && \
+    workflow/scripts/flye.sh {input.fastq} {params.tmp_fasta_name} {threads} ${{genome_size}} && \
     sleep 30 && \
     mkdir -p {params.assembly_dir} && \
     cp {params.tmp_fasta_name}.fasta {output}
-fi
         """
 
 rule autocycler_miniasm:
@@ -151,7 +146,7 @@ rule autocycler_miniasm:
         """
 genome_size=$(<{input.genome_size})
 mkdir -p {params.tmp_fasta_dir}
-miniasm.sh {input.fastq} {params.tmp_fasta_name} {threads} ${{genome_size}} && \
+workflow/scripts/miniasm.sh {input.fastq} {params.tmp_fasta_name} {threads} ${{genome_size}} && \
 sleep 30 && \
 mkdir -p {params.assembly_dir} && \
 cp {params.tmp_fasta_name}.fasta {output}
@@ -181,7 +176,7 @@ rule autocycler_necat:
         """
 genome_size=$(<{input.genome_size})
 mkdir -p {params.tmp_fasta_dir}
-necat.sh {input.fastq} {params.tmp_fasta_name} {threads} ${{genome_size}} && \
+workflow/scripts/necat.sh {input.fastq} {params.tmp_fasta_name} {threads} ${{genome_size}} && \
 sleep 30 && \
 mkdir -p {params.assembly_dir} && \
 cp {params.tmp_fasta_name}.fasta {output}
@@ -211,7 +206,7 @@ rule autocycler_nextdenovo:
         """
 genome_size=$(<{input.genome_size})
 mkdir -p {params.tmp_fasta_dir}
-nextdenovo.sh {input.fastq} {params.tmp_fasta_name} {threads} ${{genome_size}} && \
+workflow/scripts/nextdenovo.sh {input.fastq} {params.tmp_fasta_name} {threads} ${{genome_size}} && \
 sleep 30 && \
 mkdir -p {params.assembly_dir} && \
 cp {params.tmp_fasta_name}.fasta {output}
@@ -227,9 +222,10 @@ rule autocycler_raven:
         "../../envs/autocycler.yaml"
     threads: config["threads"]["raven"] # 8
     resources: 
-        mem_gb = lambda wildcards, attempt: determine_memory(wildcards, attempt, config["mem_gb"]["raven"]), # 12
-        run_time_minutes = config["run_time_minutes"]["raven"], # 60
-        retry_count = lambda wildcards, attempt=1: determine_final_try(wildcards, attempt)
+        mem_gb = config["mem_gb"]["raven"], # 12
+        # mem_gb = lambda wildcards, attempt: determine_memory(wildcards, attempt, config["mem_gb"]["raven"]), # 12
+        # run_time_minutes = config["run_time_minutes"]["raven"], # 60
+        # retry_count = lambda wildcards, attempt=1: determine_final_try(wildcards, attempt)
     params:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
         tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/raven_{subset}",
@@ -240,18 +236,12 @@ rule autocycler_raven:
         OUT + "/log/benchmark/autocycler/{sample}/raven_{subset}.txt"
     shell:
         """
-if [ {resources.retry_count} == 4 ]; then 
-    if [ ! -f {output} ]; then 
-        touch {output} 
-    fi 
-else
     genome_size=$(<{input.genome_size})
     mkdir -p {params.tmp_fasta_dir}
-    raven.sh {input.fastq} {params.tmp_fasta_name} {threads} ${{genome_size}} && \
+    workflow/scripts/raven.sh {input.fastq} {params.tmp_fasta_name} {threads} ${{genome_size}} && \
     sleep 30 && \
     mkdir -p {params.assembly_dir} && \
     cp {params.tmp_fasta_name}.fasta {output}
-fi
         """
 
 rule autocycler_collect: 
