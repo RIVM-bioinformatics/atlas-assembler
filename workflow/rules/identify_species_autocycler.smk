@@ -1,8 +1,8 @@
 rule identify_species_reads:
     input:
         # lambda wildcards: SAMPLES[wildcards.sample]["nanopore_input"],
-        chopper_fastq=OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz",
-
+        # chopper_fastq=OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz",
+        filtered = OUT + "/fastplong/{sample}.fastq",
     output:
         # read_report = OUT + "/kraken2/flye/{sample}/{sample}_read-report.txt",
         kraken2_kreport = OUT + "/kraken2/reads/{sample}/{sample}.kreport2",
@@ -26,12 +26,11 @@ rule identify_species_reads:
         kraken2 \
         --threads 4 \
         --db {params.kraken2_db} \
-        --gzip-compressed \
         --classified-out {params.out_sample}_classified_reads.txt \
         --unclassified-out {params.out_sample}_unclassified_reads.txt \
         --report {output.kraken2_kreport} \
         --output - \
-        {input.chopper_fastq}
+        {input.filtered}
 
 
         bracken -d {params.kraken2_db} \
@@ -44,7 +43,7 @@ rule identify_species_reads:
 
 rule identify_species:
     input:
-        assembly = OUT + "/autocycler/all_consensus_assembly/{sample}-autocycler.fasta", # Can be the unedited raw fasta file
+        assembly = OUT + "/autocycler/all_consensus_assembly/{sample}-autocycler.fasta", 
     output:
         # read_report = OUT + "/kraken2/flye/{sample}/{sample}_read-report.txt",
         kraken2_kreport = OUT + "/kraken2/consensus_assembly/{sample}/{sample}.kreport2",

@@ -62,3 +62,15 @@ cleanup() {
     rm -rf "$temp_dir"
 }
 trap cleanup EXIT
+
+#Run Canu.
+canu -p canu -d "$temp_dir" -fast genomeSize="$genome_size" useGrid=false maxThreads="$threads" -nanopore-raw "$reads"
+
+#Check if Canu ran successfully.
+if [[ ! -s "$temp_dir"/canu.contigs.fasta ]]; then
+    >&2 echo "Error: Canu assembly failed"
+    exit 1
+fi
+
+# Trim the contigs
+canu_trim.py "$temp_dir"/canu.contigs.fasta > "$assembly".fasta

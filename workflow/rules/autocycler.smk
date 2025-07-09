@@ -31,8 +31,9 @@ rule autocycler_subsample:
             os.path.join(SAMPLES[wildcards.sample]["nanopore_input"], "*.fastq*")
         )[0],
         # fastq = lambda wildcards: SAMPLES[wildcards.sample]["nanopore_input"],
-        gz_chopper = OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz",
-        genome_size = OUT + "/autocycler/{sample}/genome_size.txt"
+        # gz_chopper = OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz",
+        filtered = OUT + "/fastplong/{sample}.fastq",
+        genome_size = OUT + "/autocycler/{sample}/genome_size.txt",
     output: # This is the only part that is essentially hardcoded because this says you explicitly use 4 subsets - You'd have to script the output otherwise and multiply by n of subsets used.
         sample_01 = temp(OUT + "/autocycler/{sample}/subsampled_reads/sample_01.fastq"),
         sample_02 = temp(OUT + "/autocycler/{sample}/subsampled_reads/sample_02.fastq"),
@@ -54,7 +55,7 @@ rule autocycler_subsample:
     shell:
         """
 genome_size=$(<{input.genome_size})
-autocycler subsample --reads {input.fastq} --out_dir {params.outdir_sample}/subsampled_reads --genome_size ${{genome_size}} \
+autocycler subsample --reads {input.filtered} --out_dir {params.outdir_sample}/subsampled_reads --genome_size ${{genome_size}} \
 && touch {output.completed}
         """
 
@@ -63,7 +64,7 @@ rule autocycler_canu:
         fastq = OUT + "/autocycler/{sample}/subsampled_reads/sample_{subset}.fastq",
         genome_size = OUT + "/autocycler/{sample}/genome_size.txt"
     output:
-        OUT + "/autocycler/{sample}/assemblies/canu_{subset}.fasta"
+        OUT + "/autocycler/{sample}/assemblies/canu_{sample}_{subset}.fasta"
     conda:
         "../../envs/autocycler.yaml"
     threads: config["threads"]["canu"] # 18
@@ -72,12 +73,12 @@ rule autocycler_canu:
         run_time_minutes = config["run_time_minutes"]["canu"] # 600
     params:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
-        tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/canu_{subset}",
+        tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/canu_{sample}_{subset}",
         assembly_dir = OUT + "/autocycler/{sample}/assemblies/"
     log:
-        OUT + "/log/autocycler/{sample}/canu_{subset}.log"
+        OUT + "/log/autocycler/{sample}/canu_{sample}_{subset}.log"
     benchmark:
-        OUT + "/log/benchmark/autocycler/{sample}/canu_{subset}.txt"
+        OUT + "/log/benchmark/autocycler/{sample}/canu_{sample}_{subset}.txt"
     shell:
         """
 export PATH=$PATH:workflow/scripts
@@ -94,7 +95,7 @@ rule autocycler_flye:
         fastq = OUT + "/autocycler/{sample}/subsampled_reads/sample_{subset}.fastq",
         genome_size = OUT + "/autocycler/{sample}/genome_size.txt"
     output:
-        OUT + "/autocycler/{sample}/assemblies/flye_{subset}.fasta"
+        OUT + "/autocycler/{sample}/assemblies/flye_{sample}_{subset}.fasta"
     conda:
         "../../envs/autocycler.yaml"
     threads: config["threads"]["flye"] # 8
@@ -106,12 +107,12 @@ rule autocycler_flye:
         # runtime_min = config["runtime_min"]["flye"] # 60
     params:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
-        tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/flye_{subset}",
+        tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/flye_{sample}_{subset}",
         assembly_dir = OUT + "/autocycler/{sample}/assemblies/"
     log:
-        OUT + "/log/autocycler/{sample}/flye_{subset}.log"
+        OUT + "/log/autocycler/{sample}/flye_{sample}_{subset}.log"
     benchmark:
-        OUT + "/log/benchmark/autocycler/{sample}/flye_{subset}.txt"
+        OUT + "/log/benchmark/autocycler/{sample}/flye_{sample}_{subset}.txt"
     shell:
         """
     genome_size=$(<{input.genome_size})
@@ -127,7 +128,7 @@ rule autocycler_miniasm:
         fastq = OUT + "/autocycler/{sample}/subsampled_reads/sample_{subset}.fastq",
         genome_size = OUT + "/autocycler/{sample}/genome_size.txt"
     output:
-        OUT + "/autocycler/{sample}/assemblies/miniasm_{subset}.fasta"
+        OUT + "/autocycler/{sample}/assemblies/miniasm_{sample}_{subset}.fasta"
     conda:
         "../../envs/autocycler.yaml"
     threads: config["threads"]["miniasm"] # 8
@@ -136,12 +137,12 @@ rule autocycler_miniasm:
         run_time_minutes = config["run_time_minutes"]["miniasm"] # 60
     params:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
-        tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/miniasm_{subset}",
+        tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/miniasm_{sample}_{subset}",
         assembly_dir = OUT + "/autocycler/{sample}/assemblies/"
     log:
-        OUT + "/log/autocycler/{sample}/miniasm_{subset}.log"
+        OUT + "/log/autocycler/{sample}/miniasm_{sample}_{subset}.log"
     benchmark:
-        OUT + "/log/benchmark/autocycler/{sample}/miniasm_{subset}.txt"
+        OUT + "/log/benchmark/autocycler/{sample}/miniasm_{sample}_{subset}.txt"
     shell:
         """
 genome_size=$(<{input.genome_size})
@@ -157,7 +158,7 @@ rule autocycler_necat:
         fastq = OUT + "/autocycler/{sample}/subsampled_reads/sample_{subset}.fastq",
         genome_size = OUT + "/autocycler/{sample}/genome_size.txt"
     output:
-        OUT + "/autocycler/{sample}/assemblies/necat_{subset}.fasta"
+        OUT + "/autocycler/{sample}/assemblies/necat_{sample}_{subset}.fasta"
     conda:
         "../../envs/autocycler.yaml"
     threads: config["threads"]["necat"] # 8
@@ -166,12 +167,12 @@ rule autocycler_necat:
         run_time_minutes = config["run_time_minutes"]["necat"] # 60
     params:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
-        tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/necat_{subset}",
+        tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/necat_{sample}_{subset}",
         assembly_dir = OUT + "/autocycler/{sample}/assemblies/"
     log:
-        OUT + "/log/autocycler/{sample}/necat_{subset}.log"
+        OUT + "/log/autocycler/{sample}/necat_{sample}_{subset}.log"
     benchmark:
-        OUT + "/log/benchmark/autocycler/{sample}/necat_{subset}.txt"
+        OUT + "/log/benchmark/autocycler/{sample}/necat_{sample}_{subset}.txt"
     shell:
         """
 genome_size=$(<{input.genome_size})
@@ -187,7 +188,7 @@ rule autocycler_nextdenovo:
         fastq = OUT + "/autocycler/{sample}/subsampled_reads/sample_{subset}.fastq",
         genome_size = OUT + "/autocycler/{sample}/genome_size.txt"
     output:
-        OUT + "/autocycler/{sample}/assemblies/nextdenovo_{subset}.fasta"
+        OUT + "/autocycler/{sample}/assemblies/nextdenovo_{sample}_{subset}.fasta"
     conda:
         "../../envs/autocycler.yaml"
     threads: config["threads"]["nextdenovo"] # 8
@@ -196,12 +197,12 @@ rule autocycler_nextdenovo:
         run_time_minutes = config["run_time_minutes"]["nextdenovo"] # 60
     params:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
-        tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/nextdenovo_{subset}",
+        tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/nextdenovo_{sample}_{subset}",
         assembly_dir = OUT + "/autocycler/{sample}/assemblies/"
     log:
-        OUT + "/log/autocycler/{sample}/nextdenovo_{subset}.log"
+        OUT + "/log/autocycler/{sample}/nextdenovo_{sample}_{subset}.log"
     benchmark:
-        OUT + "/log/benchmark/autocycler/{sample}/nextdenovo_{subset}.txt"
+        OUT + "/log/benchmark/autocycler/{sample}/nextdenovo_{sample}_{subset}.txt"
     shell:
         """
 genome_size=$(<{input.genome_size})
@@ -217,7 +218,7 @@ rule autocycler_raven:
         fastq = OUT + "/autocycler/{sample}/subsampled_reads/sample_{subset}.fastq",
         genome_size = OUT + "/autocycler/{sample}/genome_size.txt"
     output:
-        OUT + "/autocycler/{sample}/assemblies/raven_{subset}.fasta"
+        OUT + "/autocycler/{sample}/assemblies/raven_{sample}_{subset}.fasta"
     conda:
         "../../envs/autocycler.yaml"
     threads: config["threads"]["raven"] # 8
@@ -228,12 +229,12 @@ rule autocycler_raven:
         # retry_count = lambda wildcards, attempt=1: determine_final_try(wildcards, attempt)
     params:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
-        tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/raven_{subset}",
+        tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/raven_{sample}_{subset}",
         assembly_dir = OUT + "/autocycler/{sample}/assemblies/"
     log:
         OUT + "/log/autocycler/{sample}/raven_{subset}.log"
     benchmark:
-        OUT + "/log/benchmark/autocycler/{sample}/raven_{subset}.txt"
+        OUT + "/log/benchmark/autocycler/{sample}/raven_{sample}_{subset}.txt"
     shell:
         """
     genome_size=$(<{input.genome_size})
@@ -246,7 +247,7 @@ rule autocycler_raven:
 
 rule autocycler_collect: 
     input:
-        expand([OUT + "/autocycler/{{sample}}/assemblies/{assembler}_{subset}.fasta"], assembler = assembler_list, subset = subsets_used)
+        expand([OUT + "/autocycler/{{sample}}/assemblies/{assembler}_{{sample}}_{subset}.fasta"], assembler = assembler_list, subset = subsets_used)
     output:
         OUT + "/autocycler/{sample}/assemblies_completed.txt"
     conda:
