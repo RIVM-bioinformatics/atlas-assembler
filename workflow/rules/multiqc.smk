@@ -1,9 +1,11 @@
 rule multiqc:
     input:
+       expand(OUT + "/fastplong/{sample}.json", sample=SAMPLES),
        expand(OUT + "/kraken2/flye_assembly/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
        OUT + "/qc_flye_assembly/quast/report.tsv",
-       expand(OUT + "/qc_flye_assembly/checkm/per_sample/{sample}/checkm_{sample}.tsv", sample=SAMPLES),
+       OUT + "/qc_flye_assembly/checkm/checkm_report.tsv",
        expand(OUT + "/qc_flye_assembly/busco/{sample}/busco_results_{sample}/short_summary.specific.bacteria_odb10.busco_results_{sample}.txt", sample=SAMPLES),
+       
     output:
         OUT + "/multiqc/multiqc.html",
         phred=OUT + "/multiqc/multiqc_data/multiqc_data.json",

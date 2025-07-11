@@ -25,12 +25,13 @@ rule select_genus_checkm:
 
 rule checkm:
     input:
-        assembly=OUT + "/flye/{sample}/assembly/{sample}_assembly.fasta",
+        assembly = OUT + "/flye/{sample}/{sample}_assembly.fasta",
+        # assembly=OUT + "/flye/{sample}/assembly/{sample}_assembly.fasta",
         selected_genus=OUT + "/qc_flye_assembly/checkm/per_sample/{sample}/selected_genus.txt",
     output:
         result=OUT + "/qc_flye_assembly/checkm/per_sample/{sample}/checkm_{sample}.tsv",
-        # tmp_dir1=temp(directory(OUT + "/flye_assembly/checkm/per_sample/{sample}/bins")),
-        # tmp_dir2=temp(directory(OUT + "/flye_assembly/checkm/per_sample/{sample}/storage")),
+        tmp_dir1=temp(directory(OUT + "/qc_flye_assembly/checkm/per_sample/{sample}/bins")),
+        tmp_dir2=temp(directory(OUT + "/qc_flye_assembly/checkm/per_sample/{sample}/storage")),
     message:
         "Running CheckM for {wildcards.sample}."
     conda:

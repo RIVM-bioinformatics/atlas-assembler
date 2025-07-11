@@ -1,6 +1,7 @@
 rule identify_species_reads:
     input:
-        gz_filtlong = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz",
+        # gz_filtlong = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz",
+        filtered = OUT + "/fastplong/{sample}.fastq",
     output:
         # read_report = OUT + "/kraken2/flye/{sample}/{sample}_read-report.txt",
         kraken2_kreport = OUT + "/kraken2/reads/{sample}/{sample}.kreport2",
@@ -24,12 +25,11 @@ rule identify_species_reads:
         kraken2 \
         --threads 4 \
         --db {params.kraken2_db} \
-        --gzip-compressed \
         --classified-out {params.out_sample}_classified_reads.txt \
         --unclassified-out {params.out_sample}_unclassified_reads.txt \
         --report {output.kraken2_kreport} \
         --output - \
-        {input.gz_filtlong}
+        {input.filtered}
 
         bracken -d {params.kraken2_db} \
         -i {output.kraken2_kreport} \

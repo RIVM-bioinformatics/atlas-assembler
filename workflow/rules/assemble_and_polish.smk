@@ -1,8 +1,8 @@
 rule flye:
     input:
         # lambda wildcards: SAMPLES[wildcards.sample]["nanopore_input"]
-        # OUT + "/clean_unsorted_fastq/{sample}_p.fastq.gz"
-        OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz",
+        # OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz",
+        OUT + "/fastplong/{sample}.fastq",
     output:
         contig = OUT + "/flye/{sample}/assembly/{sample}_assembly.fasta",
     message:
@@ -26,6 +26,20 @@ flye --nano-raw {input} \
     --threads {threads} \
     --out-dir {params.output_dir} \
     2> {log} && mv ${{outdir}}/assembly.fasta {output.contig}
+        """
+
+rule copy_flye_for_checkm:
+    input:
+        contig = OUT + "/flye/{sample}/assembly/{sample}_assembly.fasta",
+    output:
+        copied = OUT + "/flye/{sample}/{sample}_assembly.fasta",
+    threads: int(config["threads"]["flye"])
+    resources: 
+        mem_gb=config["mem_gb"]["flye"],
+    shell:
+        """
+        mkdir -p $(dirname {output.copied})
+        cp {input.contig} {output.copied}
         """
 
 # rule medaka_flye:
