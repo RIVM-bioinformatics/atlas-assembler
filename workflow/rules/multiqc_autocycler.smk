@@ -4,7 +4,7 @@ rule multiqc:
        expand(OUT + "/kraken2/consensus_assembly/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
     #    OUT + "/qc_subset_assembly/quast/report.tsv",
        OUT + "/qc_consensus_assembly/quast/report.tsv",
-    #    expand(OUT + "/qc_consensus_assembly/checkm/per_sample/{sample}/checkm_{sample}.tsv", sample=SAMPLES),
+       OUT + "/qc_consensus_assembly/checkm/checkm_report.tsv",
     #    expand(OUT + "/qc_subset_assembly/busco/{sample}/busco_results_{sample}/short_summary.specific.bacteria_odb10.busco_results_{sample}.txt", sample=SAMPLES),
        expand(OUT + "/qc_consensus_assembly/busco/{sample}/busco_results_{sample}/short_summary.specific.bacteria_odb10.busco_results_{sample}.txt", sample=SAMPLES),
     output:

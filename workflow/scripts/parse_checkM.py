@@ -10,7 +10,7 @@ for input_file in snakemake.input:  # type: ignore
 
     infile = open(input_file, "r")
     for line in infile:
-        if "scaffolds " in line:
+        if "assembly " in line or "autocycler " in line:
             completeness = line.split()[-3]
             contamination = line.split()[-2]
             strain_heterogeneity = line.split()[-1]
