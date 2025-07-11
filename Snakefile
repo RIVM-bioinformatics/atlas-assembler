@@ -23,6 +23,8 @@ include: "workflow/rules/fastplong.smk"
 include: "workflow/rules/nanoplot.smk"
 include: "workflow/rules/identify_species_autocycler.smk"
 include: "workflow/rules/autocycler.smk"
+include: "workflow/rules/checkm_autocycler.smk"
+include: "workflow/rules/parse_checkm_autocycler.smk"
 include: "workflow/rules/post_qc_autocycler.smk"
 include: "workflow/rules/multiqc_autocycler.smk"
 
@@ -45,6 +47,7 @@ rule all:
         expand(OUT + "/kraken2/consensus_assembly/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
         OUT + "/kraken2/consensus_assembly/top1_species_multireport.csv",
         # expand(OUT + "/qc_subset_assembly/quast/report.tsv", sample=SAMPLES),
+        expand(OUT + "/qc_consensus_assembly/checkm/per_sample/{sample}/checkm_{sample}.tsv", sample=SAMPLES),
         expand(OUT + "/qc_consensus_assembly/quast/report.tsv", sample=SAMPLES),
         # expand(OUT + "/qc_subset_assembly/busco/{sample}/", sample=SAMPLES),
         # expand(OUT + "/qc_subset_assembly/busco/{sample}/busco_results_{sample}/short_summary.specific.bacteria_odb10.busco_results_{sample}.txt", sample=SAMPLES),

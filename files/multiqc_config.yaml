@@ -40,3 +40,12 @@ table_cond_formatting_rules:
       - eq: 5
     fail:
       - gt: 4.1
+    
+custom_data:
+  FastpLong_stats:
+    section_name: 'Fastp Long Reads'
+    description: 'Fastp is a tool designed to provide fast all-in-one preprocessing for FastQ files. It can perform quality filtering, adapter trimming, and more.'
+    plot_type: 'table'
+sp:
+  FastpLong_stats:
+    fn: '*.json'
