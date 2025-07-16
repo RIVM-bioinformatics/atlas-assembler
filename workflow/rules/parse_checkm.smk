@@ -15,4 +15,4 @@ rule parse_checkm:
     log:
         OUT + "/log/checkm/checkm_combined.log",
     script:
-        "../../parse_checkM.py"
+        "../scripts/parse_checkM.py"

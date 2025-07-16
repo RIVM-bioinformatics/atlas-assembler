@@ -5,7 +5,7 @@ rule multiqc:
     #    OUT + "/qc_subset_assembly/quast/report.tsv",
        OUT + "/qc_consensus_assembly/quast/report.tsv",
        OUT + "/qc_consensus_assembly/checkm/checkm_report.tsv",
-    #    expand(OUT + "/qc_subset_assembly/busco/{sample}/busco_results_{sample}/short_summary.specific.bacteria_odb10.busco_results_{sample}.txt", sample=SAMPLES),
+       OUT + "/nanoplot/NanoStats_summary.tsv",
        expand(OUT + "/qc_consensus_assembly/busco/{sample}/busco_results_{sample}/short_summary.specific.bacteria_odb10.busco_results_{sample}.txt", sample=SAMPLES),
     output:
         OUT + "/multiqc/multiqc.html",

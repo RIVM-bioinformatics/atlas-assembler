@@ -40,6 +40,7 @@ rule all:
         expand(OUT + "/fastplong/{sample}.json", sample=SAMPLES),
         expand(OUT + "/nanoplot/{sample}/", sample=SAMPLES),
         expand(OUT + "/nanoplot/{sample}/NanoStats.txt", sample=SAMPLES),
+        expand(OUT + "/nanoplot/NanoStats_summary.tsv"),
         expand(OUT + "/autocycler/all_consensus_assembly/{sample}-autocycler.fasta", sample=SAMPLES),
         expand(OUT + "/kraken2/reads/{sample}/{sample}_species_content.txt", sample=SAMPLES),
         expand(OUT + "/kraken2/reads/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
