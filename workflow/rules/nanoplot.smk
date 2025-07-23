@@ -26,3 +26,16 @@ rule nanoplot:
 echo $'\n====================================\n==     PROGRAM VERSIONS USED      ==\n====================================\n' >> {log}; conda list >> {log}
 NanoPlot --fastq {input.filtered} --outdir {output.filtered} 
         """
+
+rule nanostats_to_tsv:
+    input:
+        expand(OUT + "/nanoplot/{sample}/NanoStats.txt", sample=SAMPLES),
+    output:
+        tsv= OUT + "/nanoplot/NanoStats_summary.tsv",
+    threads: int(config["threads"]["nanoplot"]),
+    resources: 
+        mem_gb=config["mem_gb"]["nanoplot"],
+    shell:
+        """
+        python workflow/scripts/parse_nanostats.py {input} {output.tsv}
+        """

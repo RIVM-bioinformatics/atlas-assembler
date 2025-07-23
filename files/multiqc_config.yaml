@@ -25,12 +25,19 @@ custom_data:
     section_name: 'Fastp Long Reads'
     description: 'Fastp is a tool designed to provide fast all-in-one preprocessing for FastQ files. It can perform quality filtering, adapter trimming, and more.'
     plot_type: 'table'
+  
+  NanoPlot_stats:
+    section_name: 'Nanoplot Statistics'
+    description: 'Plotting tool for long read sequencing data and alignments.'
+    plot_type: 'table'
 
 sp:
   CheckM_stats:
     fn: 'checkm_report*'
   FastpLong_stats:
-    fn: '*.json'
+    fn: 'fastplong_summary*'
+  NanoPlot_stats:
+    fn: 'NanoStats_summary*'   
 
 table_cond_formatting_rules:
   completeness:

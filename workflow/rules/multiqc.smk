@@ -1,9 +1,10 @@
 rule multiqc:
     input:
-       expand(OUT + "/fastplong/{sample}.json", sample=SAMPLES),
+       OUT + "/fastplong/fastplong_summary.tsv",
        expand(OUT + "/kraken2/flye_assembly/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
        OUT + "/qc_flye_assembly/quast/report.tsv",
        OUT + "/qc_flye_assembly/checkm/checkm_report.tsv",
+       OUT + "/nanoplot/NanoStats_summary.tsv",
        expand(OUT + "/qc_flye_assembly/busco/{sample}/busco_results_{sample}/short_summary.specific.bacteria_odb10.busco_results_{sample}.txt", sample=SAMPLES),
        
     output:

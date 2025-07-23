@@ -25,6 +25,7 @@ include: "workflow/rules/post_qc.smk"
 include: "workflow/rules/run_checkm.smk"
 include: "workflow/rules/parse_checkm.smk"
 include: "workflow/rules/multiqc.smk"
+include: "workflow/rules/create_atlas_qc_report.smk"
 
 
 
@@ -37,8 +38,10 @@ rule all:
         # expand(OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz", sample=SAMPLES),
         # expand(OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz", sample=SAMPLES),
         expand(OUT + "/fastplong/{sample}.fastq", sample=SAMPLES),
+        expand(OUT + "/fastplong/fastplong_summary.tsv"),
         expand(OUT + "/nanoplot/{sample}/", sample=SAMPLES),
         expand(OUT + "/nanoplot/{sample}/NanoStats.txt", sample=SAMPLES),
+        expand(OUT + "/nanoplot/NanoStats_summary.tsv"),
         expand(OUT + "/kraken2/reads/{sample}/{sample}_species_content.txt", sample=SAMPLES),
         expand(OUT + "/kraken2/reads/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
         expand(OUT + "/flye/{sample}/assembly/{sample}_assembly.fasta", sample=SAMPLES),
@@ -50,4 +53,5 @@ rule all:
         OUT + "/identify_species/top1_species_multireport.csv",
         expand(OUT + "/multiqc/multiqc.html", sample=SAMPLES),
         expand(OUT + "/multiqc/multiqc_data/multiqc_data.json", sample=SAMPLES),
+        OUT + "/Atlas_assembly_QC_report/QC_report.xlsx",
    

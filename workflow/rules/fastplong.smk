@@ -17,3 +17,17 @@ rule fastplong:
         """
         fastplong -i {input}/*fastq*  -o {output.filtered} -j {output.fastplong_json} -h {output.fastplong_html}  > {log} 2>&1
         """
+    
+    
+rule fastplongjson_to_tsv:
+    input:
+        expand(OUT + "/fastplong/{sample}.json", sample=SAMPLES),
+    output:
+        tsv= OUT + "/fastplong/fastplong_summary.tsv",
+    threads: int(config["threads"]["fastplong"]),
+    resources: 
+        mem_gb=config["mem_gb"]["fastplong"],
+    shell:
+        """
+        python workflow/scripts/parse_fastplong.py {input} {output.tsv}
+        """
