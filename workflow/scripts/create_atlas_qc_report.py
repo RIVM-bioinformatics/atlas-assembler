@@ -36,9 +36,11 @@ def get_quast(quast_csv: str) -> pd.DataFrame:
     return quast_df
 
 def get_checkm(checkm_csv: str) -> pd.DataFrame:
-    checkm_df = pd.read_csv(checkm_csv, sep='\t', usecols=["sample", "completeness", "contamination"])
-    checkm_df["sample"] = checkm_df["sample"].astype(str)
-    checkm_df["sample"] = checkm_df["sample"].str[:-1]
+    checkm_df = pd.read_csv(checkm_csv, sep='\t',
+                            index_col=False,
+                            usecols=["sample", "completeness", "contamination"], 
+                            dtype={"sample": str, "completeness": float, "contamination": float})
+    checkm_df["sample"] = checkm_df["sample"].astype(str).str.rstrip('L')  # Remove trailing underscore if present
     checkm_df.rename(
         columns={
             "completeness": "completeness (%)",
@@ -46,10 +48,8 @@ def get_checkm(checkm_csv: str) -> pd.DataFrame:
         },
         inplace=True,
     )
-    # if any(checkm['sample'].str.contains("_")):
-    #     checkm['sample'] = checkm['sample'].apply(lambda x: x.split('_')[0])
-    checkm_df['sample'] = checkm_df['sample'].astype(str).str.replace('-', '_')
-
+    checkm_df['sample'] = checkm_df['sample'].astype(str).str.replace('-', '_', regex=False)
+    print(checkm_df)
     return checkm_df
 
 def compile_report(
