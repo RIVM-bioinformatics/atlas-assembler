@@ -27,6 +27,7 @@ include: "workflow/rules/checkm_autocycler.smk"
 include: "workflow/rules/parse_checkm_autocycler.smk"
 include: "workflow/rules/post_qc_autocycler.smk"
 include: "workflow/rules/multiqc_autocycler.smk"
+include: "workflow/rules/create_atlas_qc_report.smk"
 
 
 
@@ -37,7 +38,7 @@ rule all:
     input:
         # expand(OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz", sample=SAMPLES),
         expand(OUT + "/fastplong/{sample}.fastq", sample=SAMPLES),
-        expand(OUT + "/fastplong/{sample}.json", sample=SAMPLES),
+        expand(OUT + "/fastplong/fastplong_summary.tsv"),
         expand(OUT + "/nanoplot/{sample}/", sample=SAMPLES),
         expand(OUT + "/nanoplot/{sample}/NanoStats.txt", sample=SAMPLES),
         expand(OUT + "/nanoplot/NanoStats_summary.tsv"),
@@ -56,3 +57,5 @@ rule all:
         expand(OUT + "/qc_consensus_assembly/busco/{sample}/busco_results_{sample}/short_summary.specific.bacteria_odb10.busco_results_{sample}.txt", sample=SAMPLES),
         expand(OUT + "/multiqc/multiqc.html", sample=SAMPLES),
         expand(OUT + "/multiqc/multiqc_data/multiqc_data.json", sample=SAMPLES),
+        OUT + "/Atlas_assembly_QC_report/QC_report.xlsx",
+        

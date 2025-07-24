@@ -33,7 +33,7 @@ sp:
   CheckM_stats:
     fn: 'checkm_report*'
   FastpLong_stats:
-    fn: '*.json'
+    fn: 'fastplong_summary*'
   NanoPlot_stats:
     fn: 'NanoStats_summary*'   
 table_cond_formatting_rules:
