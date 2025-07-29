@@ -20,6 +20,7 @@ dependencies:
   # - mamba=1.5.8 #0.21.2 / conda 4.11.0 # seems to be unable to install snakemake envs with v2.0.5
   - pigz #2.6
   - pymssql
+  - openpyxl
 
   - pip:
     - "--editable=git+https://github.com/RIVM-bioinformatics/juno-library.git@nanopore_integration#egg=juno-library"
