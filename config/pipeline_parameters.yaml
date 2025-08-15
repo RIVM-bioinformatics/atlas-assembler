@@ -11,7 +11,7 @@ threads:
     checkm: 4
     parsing: 4
     busco: 4
-    genome_size: 8
+    genome_size: 16
     canu: 18
     miniasm: 8
     necat: 4
@@ -31,7 +31,7 @@ mem_gb:
     checkm: 8
     parsing: 8
     busco: 4
-    genome_size: 8
+    genome_size: 16
     canu: 24
     miniasm: 16
     necat: 12

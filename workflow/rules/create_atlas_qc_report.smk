@@ -5,6 +5,7 @@ rule create_atlas_QC_report:
         fastp=OUT + "/fastplong/fastplong_summary.tsv",
         quast=OUT + "/qc_flye_assembly/quast/transposed_report.tsv",
         checkm=OUT + "/qc_flye_assembly/checkm/checkm_report.tsv",
+        genome_size=expand(OUT + "/genome_size/{sample}/genome_size.txt", sample=SAMPLES),
     output:
         OUT + "/Atlas_assembly_QC_report/QC_report.xlsx",
     message:

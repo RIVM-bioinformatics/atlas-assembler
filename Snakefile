@@ -21,6 +21,7 @@ include: "workflow/rules/nanoplot.smk"
 include: "workflow/rules/fastplong.smk"
 include: "workflow/rules/identify_species.smk"
 include: "workflow/rules/assemble_and_polish.smk"
+include: "workflow/rules/determine_genome_size.smk"
 include: "workflow/rules/post_qc.smk"
 include: "workflow/rules/run_checkm.smk"
 include: "workflow/rules/parse_checkm.smk"
@@ -46,6 +47,7 @@ rule all:
         expand(OUT + "/kraken2/reads/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
         expand(OUT + "/flye/{sample}/assembly/{sample}_assembly.fasta", sample=SAMPLES),
         expand(OUT + "/flye/{sample}/{sample}_assembly.fasta", sample=SAMPLES),
+        expand(OUT + "/genome_size/{sample}/genome_size.txt", sample=SAMPLES),
         expand(OUT + "/qc_flye_assembly/checkm/per_sample/{sample}/checkm_{sample}.tsv", sample=SAMPLES),
         expand(OUT + "/qc_flye_assembly/quast/report.tsv", sample=SAMPLES),
         expand(OUT + "/qc_flye_assembly/busco/{sample}/", sample=SAMPLES),
