@@ -1,7 +1,7 @@
 import sys
 # Redirect all printing and exceptions to the snakemake log of this rule
 sys.stdout = sys.stderr = open(snakemake.log[0], "w")  # type: ignore
-
+import os
 import pandas as pd
 from functools import reduce
 import json
@@ -49,23 +49,56 @@ def get_checkm(checkm_csv: str) -> pd.DataFrame:
         inplace=True,
     )
     checkm_df['sample'] = checkm_df['sample'].astype(str).str.replace('-', '_', regex=False)
-    print(checkm_df)
     return checkm_df
+
+# def get_coverage(genome_size_txt, fastplong_csv):
+#     with open(genome_size_txt) as f:
+#         genome_size = float(f.read().strip())
+
+#     fastplong_df = pd.read_csv(fastplong_csv, sep='\t')
+#     fastplong_df['sample'] = fastplong_df['sample'].astype(str).str.replace('-', '_')
+#     fastplong_df['coverage'] = round(fastplong_df['after_total_bases'] / genome_size, 1)
+#     coverage_df = fastplong_df[['sample', 'coverage']]
+#     return coverage_df
+
+def get_coverage(genome_size_txt_list, fastplong_csv):
+    # Read fastplong summary
+    fastplong_df = pd.read_csv(fastplong_csv, sep='\t')
+    fastplong_df['sample'] = fastplong_df['sample'].astype(str).str.replace('-', '_')
+
+    # Build a sample:genome_size dictionary
+    genome_sizes = {}
+    for path in genome_size_txt_list:
+        # sample = os.path.basename(path).replace('_genome_size.txt', '').replace('-', '_')
+        # sample = os.path.basename(path)
+        sample = os.path.basename(os.path.dirname(path)).replace('-', '_')
+        with open(path) as f:
+            genome_sizes[sample] = float(f.read().strip())
+    # sample = os.path.basename(path).replace('_genome_size.txt', '').replace('-', '_')
+    # Map genome size to each sample
+    fastplong_df['genome_size'] = fastplong_df['sample'].map(genome_sizes)
+    fastplong_df['coverage'] = fastplong_df['after_total_bases'] / fastplong_df['genome_size']
+
+    coverage_df = fastplong_df[['sample', 'coverage']]
+
+    return coverage_df
 
 def compile_report(
     species_csv: str,
     phred_csv: str,
     fastp_csv: str,
     quast_csv: str,
-    checkm_csv: str
+    checkm_csv: str,
+    genome_size_txt: str,
 ) -> pd.DataFrame:
     species_df = get_genus(species_csv)
     phred_df = get_phred(phred_csv)
     fastp_df = get_fastp(fastp_csv)
     quast_df = get_quast(quast_csv)
+    coverage_df = get_coverage(genome_size_txt, fastp_csv)
     checkm_df = get_checkm(checkm_csv)
 
-    dfs = [species_df, phred_df, fastp_df, quast_df, checkm_df]
+    dfs = [species_df, phred_df, fastp_df, quast_df, coverage_df, checkm_df]
     final_df = reduce(lambda left, right: pd.merge(left, right, on='sample', how='outer'), dfs)
     final_df["Total length (Mbp)"] = final_df["Total length (Mbp)"] / 1_000_000
     return final_df
@@ -86,5 +119,6 @@ report_df = compile_report(
     snakemake.input.fastp,  # type: ignore
     snakemake.input.quast,  # type: ignore
     snakemake.input.checkm,  # type: ignore
+    snakemake.input.genome_size,  # type: ignore
 )
 write_excel_report(report_df, snakemake.output[0])  # type: ignore
