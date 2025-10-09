@@ -20,6 +20,7 @@ include: "workflow/rules/nanoplot.smk"
 # include: "workflow/rules/filtering.smk"
 include: "workflow/rules/fastplong.smk"
 include: "workflow/rules/identify_species.smk"
+include: "workflow/rules/create_atlas_species_summary.smk"
 include: "workflow/rules/assemble_and_polish.smk"
 include: "workflow/rules/determine_genome_size.smk"
 include: "workflow/rules/post_qc.smk"
@@ -52,6 +53,9 @@ rule all:
         expand(OUT + "/qc_flye_assembly/quast/report.tsv", sample=SAMPLES),
         expand(OUT + "/qc_flye_assembly/busco/{sample}/", sample=SAMPLES),
         expand(OUT + "/qc_flye_assembly/busco/{sample}/busco_results_{sample}/short_summary.specific.bacteria_odb10.busco_results_{sample}.txt", sample=SAMPLES),
+        expand(OUT + "/kraken2/reads/{sample}/{sample}_species_content.txt", sample=SAMPLES,),
+        expand(OUT + "/kraken2/reads/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES,),
+        OUT + "/identify_species/skani_results.tsv",
         OUT + "/identify_species/top1_species_multireport.csv",
         expand(OUT + "/multiqc/multiqc.html", sample=SAMPLES),
         expand(OUT + "/multiqc/multiqc_data/multiqc_data.json", sample=SAMPLES),
