@@ -1,6 +1,6 @@
 rule select_genus_checkm:
     input:
-        genus_bracken=OUT + "/kraken2/consensus_assembly/{sample}/{sample}_bracken_species.kreport2",
+        genus_bracken=OUT + "/identify_species/consensus_assembly/{sample}/{sample}_bracken_species.kreport2",
         list_accepted_genera="files/accepted_genera_checkm.txt",
     output:
         selected_genus=OUT

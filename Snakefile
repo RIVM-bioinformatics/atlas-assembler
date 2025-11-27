@@ -22,6 +22,7 @@ assembler_list = ["canu", "flye", "miniasm", "necat", "nextdenovo", "raven"]
 include: "workflow/rules/fastplong.smk"
 include: "workflow/rules/nanoplot.smk"
 include: "workflow/rules/identify_species_autocycler.smk"
+include: "workflow/rules/create_atlas_species_summary.smk"
 include: "workflow/rules/autocycler.smk"
 include: "workflow/rules/checkm_autocycler.smk"
 include: "workflow/rules/parse_checkm_autocycler.smk"
@@ -43,16 +44,14 @@ rule all:
         expand(OUT + "/nanoplot/{sample}/NanoStats.txt", sample=SAMPLES),
         expand(OUT + "/nanoplot/NanoStats_summary.tsv"),
         expand(OUT + "/autocycler/all_consensus_assembly/{sample}-autocycler.fasta", sample=SAMPLES),
-        expand(OUT + "/kraken2/reads/{sample}/{sample}_species_content.txt", sample=SAMPLES),
-        expand(OUT + "/kraken2/reads/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
-        expand(OUT + "/kraken2/consensus_assembly/{sample}/{sample}_species_content.txt", sample=SAMPLES),
-        expand(OUT + "/kraken2/consensus_assembly/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
-        OUT + "/kraken2/consensus_assembly/top1_species_multireport.csv",
-        # expand(OUT + "/qc_subset_assembly/quast/report.tsv", sample=SAMPLES),
+        expand(OUT + "/identify_species/reads/{sample}/{sample}_species_content.txt", sample=SAMPLES),
+        expand(OUT + "/identify_species/reads/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
+        expand(OUT + "/identify_species/consensus_assembly/{sample}/{sample}_species_content.txt", sample=SAMPLES),
+        expand(OUT + "/identify_species/consensus_assembly/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
+        OUT + "/identify_species/skani_results.tsv",
+        OUT + "/identify_species/top1_species_multireport.csv",
         expand(OUT + "/qc_consensus_assembly/checkm/per_sample/{sample}/checkm_{sample}.tsv", sample=SAMPLES),
         expand(OUT + "/qc_consensus_assembly/quast/report.tsv", sample=SAMPLES),
-        # expand(OUT + "/qc_subset_assembly/busco/{sample}/", sample=SAMPLES),
-        # expand(OUT + "/qc_subset_assembly/busco/{sample}/busco_results_{sample}/short_summary.specific.bacteria_odb10.busco_results_{sample}.txt", sample=SAMPLES),
         expand(OUT + "/qc_consensus_assembly/busco/{sample}/", sample=SAMPLES),
         expand(OUT + "/qc_consensus_assembly/busco/{sample}/busco_results_{sample}/short_summary.specific.bacteria_odb10.busco_results_{sample}.txt", sample=SAMPLES),
         expand(OUT + "/multiqc/multiqc.html", sample=SAMPLES),

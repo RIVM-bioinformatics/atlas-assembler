@@ -5,9 +5,9 @@ rule identify_species_reads:
         filtered = OUT + "/fastplong/{sample}.fastq",
     output:
         # read_report = OUT + "/kraken2/flye/{sample}/{sample}_read-report.txt",
-        kraken2_kreport = OUT + "/kraken2/reads/{sample}/{sample}.kreport2",
-        bracken_s = OUT + "/kraken2/reads/{sample}/{sample}_species_content.txt",
-        bracken_kreport=OUT + "/kraken2/reads/{sample}/{sample}_bracken_species.kreport2",
+        kraken2_kreport = OUT + "/identify_species/reads/{sample}/{sample}.kreport2",
+        bracken_s = OUT + "/identify_species/reads/{sample}/{sample}_species_content.txt",
+        bracken_kreport=OUT + "/identify_species/reads/{sample}/{sample}_bracken_species.kreport2",
     conda:
         "../../envs/identify_species.yaml"
     threads: int(config["threads"]["kraken2"])
@@ -15,12 +15,12 @@ rule identify_species_reads:
         mem_gb = config["mem_gb"]["kraken2"],
         # runtime_min = config["runtime_min"]["kraken2"]
     params:
-        out_sample = OUT + "/kraken2/reads/{sample}/{sample}",
+        out_sample = OUT + "/identify_species/reads/{sample}/{sample}",
         kraken2_db = config["db_dir"],
     log:
-        OUT + "/log/kraken2/{sample}-reads.log"
+        OUT + "/log/identify_species/{sample}-reads.log"
     benchmark:
-        OUT + "/log/kraken2/kraken2_{sample}-reads.txt"
+        OUT + "/log/identify_species/kraken2_{sample}-reads.txt"
     shell: 
         """
         kraken2 \
@@ -46,9 +46,9 @@ rule identify_species:
         assembly = OUT + "/autocycler/all_consensus_assembly/{sample}-autocycler.fasta", 
     output:
         # read_report = OUT + "/kraken2/flye/{sample}/{sample}_read-report.txt",
-        kraken2_kreport = OUT + "/kraken2/consensus_assembly/{sample}/{sample}.kreport2",
-        bracken_s = OUT + "/kraken2/consensus_assembly/{sample}/{sample}_species_content.txt",
-        bracken_kreport=OUT + "/kraken2/consensus_assembly/{sample}/{sample}_bracken_species.kreport2",
+        kraken2_kreport = OUT + "/identify_species/consensus_assembly/{sample}/{sample}.kreport2",
+        bracken_s = OUT + "/identify_species/consensus_assembly/{sample}/{sample}_species_content.txt",
+        bracken_kreport=OUT + "/identify_species/consensus_assembly/{sample}/{sample}_bracken_species.kreport2",
     conda:
         "../../envs/identify_species.yaml"
     threads: int(config["threads"]["kraken2"])
@@ -56,12 +56,12 @@ rule identify_species:
         mem_gb = config["mem_gb"]["kraken2"],
         # runtime_min = config["runtime_min"]["kraken2"]
     params:
-        out_sample = OUT + "/kraken2/consensus_assembly/{sample}/{sample}",
+        out_sample = OUT + "/identify_species/consensus_assembly/{sample}/{sample}",
         kraken2_db = config["db_dir"],
     log:
-        OUT + "/log/kraken2/{sample}-consensus.log"
+        OUT + "/log/identify_species/{sample}-consensus.log"
     benchmark:
-        OUT + "/log/kraken2/kraken2_{sample}-consensus.txt"
+        OUT + "/log/identify_species/kraken2_{sample}-consensus.txt"
     shell: 
         """
         kraken2 --threads 4 \
@@ -81,23 +81,30 @@ rule identify_species:
 
         """
 
-rule top_species_multireport:
+rule identify_species_skani:
     input:
-        expand(
-            OUT + "/kraken2/consensus_assembly/{sample}/{sample}_species_content.txt",
-            sample=SAMPLES,
-        ),
+        assembly = expand(OUT + "/autocycler/all_consensus_assembly/{sample}-autocycler.fasta", sample=SAMPLES),
     output:
-        OUT + "/kraken2/consensus_assembly/top1_species_multireport.csv",
+        OUT + "/identify_species/skani_results.tsv",
     message:
-        "Generating multireport for spcies identification."
-    log:
-        OUT + "/log/identify_species/multireport.log",
-    threads: config["threads"]["parsing"]
+        "Generating skani report."
+    conda:
+        "../../envs/skani.yaml"
+    # container:
+    #     "docker://quay.io/biocontainers/skani:0.2.2--ha6fb395_2"
+    threads: config["threads"]["skani"]
     resources:
-        mem_gb=config["mem_gb"]["parsing"],
+        mem_gb=config["mem_gb"]["skani"],
+    log:
+        OUT + "/log/identify_species/skani_report.log",
+    params:
+        max_no_hits=config["skani_max_no_hits"],
+        gtdb_db_dir=config["skani_gtdb_db_dir"],
     shell:
         """
-        python workflow/scripts/make_summary_main_species.py --input-files {input} \
-        --output-multireport {output} > {log}
+skani search {input.assembly} \
+    -o {output} \
+    -d {params.gtdb_db_dir} \
+    --ci \
+    -n {params.max_no_hits} >> {log} 2>&1
         """

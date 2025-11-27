@@ -17,6 +17,7 @@ threads:
     necat: 8
     nextdenovo: 8
     raven: 8
+    skani: 1
 
 mem_gb:
     default: 4
@@ -37,6 +38,7 @@ mem_gb:
     necat: 16
     nextdenovo: 12
     raven: 16
+    skani: 100
 
 run_time_minutes:
     default: 30

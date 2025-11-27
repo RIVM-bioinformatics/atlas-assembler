@@ -1,6 +1,6 @@
 rule create_atlas_QC_report:
     input:
-        species=OUT + "/kraken2/consensus_assembly/top1_species_multireport.csv",
+        species=OUT + "/identify_species/top1_species_multireport.csv",
         phred=OUT + "/nanoplot/NanoStats_summary.tsv",
         fastp=OUT + "/fastplong/fastplong_summary.tsv",
         quast=OUT + "/qc_consensus_assembly/quast/transposed_report.tsv",

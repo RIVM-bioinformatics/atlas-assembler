@@ -1,7 +1,7 @@
 rule multiqc:
     input:
        OUT + "/fastplong/fastplong_summary.tsv",
-       expand(OUT + "/kraken2/consensus_assembly/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
+       expand(OUT + "/identify_species/consensus_assembly/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
     #    OUT + "/qc_subset_assembly/quast/report.tsv",
        OUT + "/qc_consensus_assembly/quast/report.tsv",
        OUT + "/qc_consensus_assembly/checkm/checkm_report.tsv",

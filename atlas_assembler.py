@@ -167,6 +167,23 @@ class AtlasAssembler(Pipeline):
         type=str,
         required=False,
     )
+        self.add_argument(
+            "-sdb",
+            "--skani-gtdb-db-dir",
+            type=Path,
+            metavar="DIR",
+            default="/mnt/db/juno/skani/gtdb_skani_database_ani-version-r226",
+            help="Relative or absolute path to the Skani GTDB database. Default: '%(default)s'.",
+    )
+        self.add_argument(
+            "-sm",
+            "--skani-max-no-hits",
+            type=int,
+            metavar="INT",
+            default=1,
+            dest="skani_max_no_hits",
+            help="Maximum number of hits to report for each contig in the Skani step. Default is 1, change value for debugging or development only.",
+    )
     def _parse_args(self) -> argparse.Namespace:
         args = super()._parse_args()
 
@@ -185,7 +202,8 @@ class AtlasAssembler(Pipeline):
         self.medaka_rounds: int = args.medaka_rounds
         self.medaka_model: str = args.medaka_model
         self.auto_exe: str = args.auto_exe
-
+        self.skani_max_no_hits = args.skani_max_no_hits
+        self.skani_gtdb_db_dir = args.skani_gtdb_db_dir.resolve()
         return args
     
     # Extra class methods for this pipeline can be defined here
@@ -245,6 +263,8 @@ class AtlasAssembler(Pipeline):
             "medaka_rounds": str(self.medaka_rounds),
             "medaka_model": str(self.medaka_model),
             "auto_exe": str(self.auto_exe),
+            "skani_gtdb_db_dir": str(self.skani_gtdb_db_dir),
+            "skani_max_no_hits": int(self.skani_max_no_hits),
         }
 
 
