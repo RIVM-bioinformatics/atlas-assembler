@@ -29,12 +29,12 @@ git clone [link]
 
 2. Go to [name] directory.
 ```
-cd [directory name]
+cd atlas-assembler
 ```
 
 3. Continue steps
 ```
-continue example code
+
 ```
 
 ## Parameters & Usage
@@ -42,20 +42,11 @@ continue example code
 * ```-h, --help``` Shows the help of the pipeline
 
 ### Required parameters
-* ```-p, --parameter``` exaplanation of the parameter
-
-### Optional parameters
-* ```-o --optional_parameter``` exaplanation of the parameter
-
+* ```--sequencing-tech``` 'illumina' or 'nanopore' The default is illumina.
 
 ### The base command to run this program. 
 ```
 python atlas_assembler.py -i [dir/to/fasta_or_fastq_files] -o [output/dir] --sequencing-tech nanopore
-```
-
-### An example on how to run the pipeline.
-```
-[insert command here]
 ```
 
 Detailed information about the pipeline can be found in the [documentation](link to other docs). This documentation is only suitable for users that have access to the RIVM Linux environment.

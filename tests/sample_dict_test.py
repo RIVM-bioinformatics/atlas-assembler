@@ -17,13 +17,13 @@ def test_pipeline(input_dir, sequencing_tech):
     return pipeline.sample_dict
 
 def test_illumina():
-    illumina_input_dir = pathlib.Path("/mnt/scratch_dir/singhsp/ONT_development/sample_data/listeria_test")
+    illumina_input_dir = pathlib.Path("example")
     illumina_sample_dict = test_pipeline(illumina_input_dir, "illumina")
     print("Illumina Sample Dict:")
     print(illumina_sample_dict)
 
 def test_nanopore():
-    nanopore_input_dir = pathlib.Path("/mnt/scratch_dir/singhsp/ONT_development/nanopore_input")
+    nanopore_input_dir = pathlib.Path("example")
     nanopore_sample_dict = test_pipeline(nanopore_input_dir, "nanopore")
     print("Nanopore Sample Dict:")
     print(nanopore_sample_dict)
