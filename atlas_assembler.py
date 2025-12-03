@@ -79,6 +79,14 @@ class AtlasAssembler(Pipeline):
             help="Relative or absolute path to the Kraken2 database. Default: /mnt/db/juno/kraken2_db.",
         )
         self.add_argument(
+            "-sdb",
+            "--skani-gtdb-db-dir",
+            type=Path,
+            metavar="DIR",
+            default="/mnt/db/juno/skani/gtdb_skani_database_ani-version-r226",
+            help="Relative or absolute path to the Skani GTDB database. Default: '%(default)s'.",
+        )
+        self.add_argument(
             "-hc",
             "--headcrop",
             type=int,
@@ -158,7 +166,16 @@ class AtlasAssembler(Pipeline):
             help="Medaka model to use when polishing, will also be supplied through the start_longread_assembly.sh",
             type=str,
             required=False,
-        )
+    )
+        self.add_argument(
+            "-sm",
+            "--skani-max-no-hits",
+            type=int,
+            metavar="INT",
+            default=1,
+            dest="skani_max_no_hits",
+            help="Maximum number of hits to report for each contig in the Skani step. Default is 2, change value for debugging or development only.",
+    )
     def _parse_args(self) -> argparse.Namespace:
         args = super()._parse_args()
 
@@ -176,6 +193,10 @@ class AtlasAssembler(Pipeline):
         self.quality: int = args.quality
         self.medaka_rounds: int = args.medaka_rounds
         self.medaka_model: str = args.medaka_model
+        self.skani_max_no_hits = args.skani_max_no_hits
+        self.skani_gtdb_db_dir = args.skani_gtdb_db_dir.resolve()
+
+
 
         return args
     
@@ -234,6 +255,9 @@ class AtlasAssembler(Pipeline):
             "quality": str(self.quality),
             "medaka_rounds": str(self.medaka_rounds),
             "medaka_model": str(self.medaka_model),
+            "skani_gtdb_db_dir": str(self.skani_gtdb_db_dir),
+            "skani_max_no_hits": int(self.skani_max_no_hits),
+
         }
 
 

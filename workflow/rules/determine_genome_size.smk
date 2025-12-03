@@ -21,5 +21,9 @@ rule determine_genome_size:
         OUT + "/log/benchmark/genome_size/{sample}/determine_genome_size.txt"
     shell:
         """
-       workflow/scripts/genome_size_raven.sh {input}/*fastq* {threads} >> {params.outdir_sample}/genome_size.txt
+       if [ -d {input} ]; then \
+           workflow/scripts/genome_size_raven.sh {input}/*fastq* {threads} >> {params.outdir_sample}/genome_size.txt
+       else \
+           workflow/scripts/genome_size_raven.sh {input} {threads} >> {params.outdir_sample}/genome_size.txt
+       fi
         """

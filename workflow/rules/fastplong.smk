@@ -15,7 +15,11 @@ rule fastplong:
         mem_gb=config["mem_gb"]["fastplong"],
     shell:
         """
-        fastplong -i {input}/*fastq*  -o {output.filtered} -j {output.fastplong_json} -h {output.fastplong_html}  > {log} 2>&1
+        if [ -d {input} ]; then \
+           fastplong -i {input}/*fastq*  -o {output.filtered} -j {output.fastplong_json} -h {output.fastplong_html}  > {log} 2>&1
+        else \
+           fastplong -i {input} -o {output.filtered} -j {output.fastplong_json} -h {output.fastplong_html}  > {log} 2>&1
+        fi
         """
     
     

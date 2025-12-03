@@ -79,23 +79,51 @@ rule identify_species:
 
         """
 
-rule top_species_multireport:
+rule identify_species_skani:
     input:
-        expand(
-            OUT + "/kraken2/flye_assembly/{sample}/{sample}_species_content.txt",
-            sample=SAMPLES,
-        ),
+        expand(OUT + "/flye/{sample}/assembly/{sample}_assembly.fasta", sample=SAMPLES,),
     output:
-        OUT + "/identify_species/top1_species_multireport.csv",
+        OUT + "/identify_species/skani_results.tsv",
     message:
-        "Generating multireport for spcies identification."
-    log:
-        OUT + "/log/identify_species/multireport.log",
-    threads: config["threads"]["parsing"]
+        "Generating skani report."
+    conda:
+        "../../envs/skani.yaml"
+    # container:
+    #     "docker://quay.io/biocontainers/skani:0.2.2--ha6fb395_2"
+    threads: config["threads"]["skani"]
     resources:
-        mem_gb=config["mem_gb"]["parsing"],
+        mem_gb=config["mem_gb"]["skani"],
+    log:
+        OUT + "/log/identify_species/skani_report.log",
+    params:
+        max_no_hits=config["skani_max_no_hits"],
+        gtdb_db_dir=config["skani_gtdb_db_dir"],
     shell:
         """
-        python workflow/scripts/make_summary_main_species.py --input-files {input} \
-                                                --output-multireport {output} > {log}
+skani search {input} \
+    -o {output} \
+    -d {params.gtdb_db_dir} \
+    --ci \
+    -n {params.max_no_hits} >> {log} 2>&1
         """
+
+# rule top_species_multireport:
+#     input:
+#         expand(
+#             OUT + "/kraken2/flye_assembly/{sample}/{sample}_species_content.txt",
+#             sample=SAMPLES,
+#         ),
+#     output:
+#         OUT + "/identify_species/top1_species_multireport.csv",
+#     message:
+#         "Generating multireport for spcies identification."
+#     log:
+#         OUT + "/log/identify_species/multireport.log",
+#     threads: config["threads"]["parsing"]
+#     resources:
+#         mem_gb=config["mem_gb"]["parsing"],
+#     shell:
+#         """
+#         python workflow/scripts/make_summary_main_species.py --input-files {input} \
+#                                                 --output-multireport {output} > {log}
+#         """
