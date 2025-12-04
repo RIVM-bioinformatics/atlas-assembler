@@ -52,7 +52,7 @@ fi
 
 set -euo pipefail
 
-python atlas_assembler.py --queue "${QUEUE}" -i "${input_dir}" -o "${output_dir}" --sequencing_tech "nanopore"
+python atlas_assembler.py --queue "${QUEUE}" -i "${input_dir}" -o "${output_dir}" --sequencing-tech "nanopore"
 
 result=$?
 
