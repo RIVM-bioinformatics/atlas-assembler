@@ -19,6 +19,20 @@ IN = config["input_dir"]
 subsets_used = ["01", "02", "03", "04"]
 assembler_list = ["canu", "flye", "miniasm", "necat", "nextdenovo", "raven"]
 
+
+def determine_threads(wildcards, attempt, base_threads):
+    return attempt * base_threads 
+
+def determine_runtime(wildcards, attempt, base_time):
+    return attempt * base_time 
+
+def determine_memory(wildcards, attempt, base_mem): # Same multiplying as with time now but might change it so separate function
+    return attempt * base_mem 
+
+def determine_final_try(wildcards, attempt):
+    return attempt * 1
+
+
 include: "workflow/rules/fastplong.smk"
 include: "workflow/rules/nanoplot.smk"
 include: "workflow/rules/identify_species_autocycler.smk"

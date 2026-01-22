@@ -49,4 +49,5 @@ run_time_minutes:
     necat: 60
     nextdenovo: 60
     raven: 60
+    flye: 60
 
