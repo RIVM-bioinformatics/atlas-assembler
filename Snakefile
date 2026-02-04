@@ -17,7 +17,8 @@ IN = config["input_dir"]
 
 # AUTOCYCLER_EXE = config["autocycler_executable"] #where does this come from?
 subsets_used = ["01", "02", "03", "04"]
-assembler_list = ["canu", "flye", "miniasm", "necat", "nextdenovo", "raven"]
+# assembler_list = ["canu", "flye", "miniasm", "necat", "nextdenovo", "raven"]
+assembler_list = ["flye","miniasm", "raven", "nextdenovo"]
 
 
 def determine_threads(wildcards, attempt, base_threads):
