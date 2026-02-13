@@ -44,11 +44,13 @@ rule identify_species_reads:
 rule identify_species:
     input:
         assembly = OUT + "/autocycler/all_consensus_assembly/{sample}-autocycler.fasta", 
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         # read_report = OUT + "/kraken2/flye/{sample}/{sample}_read-report.txt",
         kraken2_kreport = OUT + "/identify_species/consensus_assembly/{sample}/{sample}.kreport2",
         bracken_s = OUT + "/identify_species/consensus_assembly/{sample}/{sample}_species_content.txt",
         bracken_kreport=OUT + "/identify_species/consensus_assembly/{sample}/{sample}_bracken_species.kreport2",
+        
     conda:
         "../../envs/identify_species.yaml"
     threads: int(config["threads"]["kraken2"])
@@ -64,21 +66,27 @@ rule identify_species:
         OUT + "/log/identify_species/kraken2_{sample}-consensus.txt"
     shell: 
         """
-        kraken2 --threads 4 \
-        --db {params.kraken2_db} \
-        --classified-out {params.out_sample}_classified_assembly.txt \
-        --unclassified-out {params.out_sample}_unclassified_assembly.txt \
-        --report {output.kraken2_kreport} \
-        --output - \
-        {input.assembly}
+        if [ $(< {input.flag_filtered}) == "sufficient" ]; then
+            kraken2 --threads 4 \
+            --db {params.kraken2_db} \
+            --classified-out {params.out_sample}_classified_assembly.txt \
+            --unclassified-out {params.out_sample}_unclassified_assembly.txt \
+            --report {output.kraken2_kreport} \
+            --output - \
+            {input.assembly}
 
-        bracken -d {params.kraken2_db} \
-        -i {output.kraken2_kreport} \
-        -o {output.bracken_s} \
-        -r 150 \
-        -l S \
-        -t 0  &>> {log} 
+            bracken -d {params.kraken2_db} \
+            -i {output.kraken2_kreport} \
+            -o {output.bracken_s} \
+            -r 150 \
+            -l S \
+            -t 0  &>> {log} 
+        else
+            echo "Unable to run Kraken as coverage is less than 30 x" > {output.kraken2_kreport}
+            echo "Unable to run Bracken as coverage is less than 30 x" > {output.bracken_s}
+            echo "Unable to run Bracken as coverage is less than 30 x" > {output.bracken_kreport}
 
+        fi
         """
 
 rule identify_species_skani:
@@ -102,9 +110,9 @@ rule identify_species_skani:
         gtdb_db_dir=config["skani_gtdb_db_dir"],
     shell:
         """
-skani search {input.assembly} \
-    -o {output} \
-    -d {params.gtdb_db_dir} \
-    --ci \
-    -n {params.max_no_hits} >> {log} 2>&1
+    skani search {input.assembly} \
+        -o {output} \
+        -d {params.gtdb_db_dir} \
+        --ci \
+        -n {params.max_no_hits} >> {log} 2>&1
         """

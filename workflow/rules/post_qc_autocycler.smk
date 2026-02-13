@@ -21,11 +21,13 @@ rule run_quast:
     shell:
         """
         quast.py --threads {threads} {input.assembly} --output-dir {params.output_dir} > {log}
+
         """
 
 rule busco:
     input:
-        contigs = OUT + "/autocycler/all_consensus_assembly/{sample}-autocycler.fasta"
+        contigs = OUT + "/autocycler/all_consensus_assembly/{sample}-autocycler.fasta",
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         # OUT + directory("/busco/{sample}/")
         busco_out = directory(OUT + "/qc_consensus_assembly/busco/{sample}/"),
@@ -47,6 +49,10 @@ rule busco:
         mem_gb=config["mem_gb"]["busco"]
     shell:
         """
-        busco -i {input.contigs} --out_path {output.busco_out} -l {params.lineage} -o {params.short_summary_filename}\
-        -m {params.mode} -f 
+        if [ $(< {input.flag_filtered}) == "sufficient" ]; then
+            busco -i {input.contigs} --out_path {output.busco_out} -l {params.lineage} -o {params.short_summary_filename}\
+            -m {params.mode} -f
+        else
+            echo "Not enough coverage to run BUSCO" > {output.short_summary}
+        fi
         """

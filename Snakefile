@@ -47,6 +47,7 @@ include: "workflow/rules/create_atlas_qc_report.smk"
 
 
 
+
 localrules:
     all
 
@@ -58,9 +59,9 @@ rule all:
         expand(OUT + "/nanoplot/{sample}/", sample=SAMPLES),
         expand(OUT + "/nanoplot/{sample}/NanoStats.txt", sample=SAMPLES),
         expand(OUT + "/nanoplot/NanoStats_summary.tsv"),
-        expand(OUT + "/autocycler/all_consensus_assembly/{sample}-autocycler.fasta", sample=SAMPLES),
         expand(OUT + "/identify_species/reads/{sample}/{sample}_species_content.txt", sample=SAMPLES),
         expand(OUT + "/identify_species/reads/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
+        expand(OUT + "/autocycler/all_consensus_assembly/{sample}-autocycler.fasta", sample=SAMPLES),
         expand(OUT + "/identify_species/consensus_assembly/{sample}/{sample}_species_content.txt", sample=SAMPLES),
         expand(OUT + "/identify_species/consensus_assembly/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
         OUT + "/identify_species/skani_results.tsv",
@@ -72,4 +73,5 @@ rule all:
         expand(OUT + "/multiqc/multiqc.html", sample=SAMPLES),
         expand(OUT + "/multiqc/multiqc_data/multiqc_data.json", sample=SAMPLES),
         OUT + "/Atlas_assembly_QC_report/QC_report.xlsx",
+
         

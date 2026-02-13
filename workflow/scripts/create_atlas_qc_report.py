@@ -23,16 +23,30 @@ def get_fastp(fastp_csv: str) -> pd.DataFrame:
     fastp_df['sample'] = fastp_df['sample'].astype(str).str.replace('-', '_')
     return fastp_df
 
-def get_quast(quast_csv: str) -> pd.DataFrame:
-    quast_df = pd.read_csv(quast_csv, sep='\t', usecols=["Assembly", "Total length", "# contigs", "N50", "GC (%)"])
-    quast_df.rename(
-    columns={"Assembly": "sample", "Total length": "Total length (Mbp)"},
-    inplace=True,
-)
-    quast_df["sample"] = quast_df["sample"].astype(str)
-    if any(quast_df['sample'].str.contains("_")):
-        quast_df['sample'] = quast_df['sample'].apply(lambda x: x.rsplit('_', 1)[0])
+# def get_quast(quast_csv: str) -> pd.DataFrame:
+#     quast_df = pd.read_csv(quast_csv, sep='\t', usecols=["Assembly", "Total length", "# contigs", "GC (%)", "N50", "L50", "N90", "L90"])
+#     quast_df.rename(
+#     columns={"Assembly": "sample", "Total length": "Total length (Mbp)"},
+#     inplace=True,
+# )
+#     quast_df["sample"] = quast_df["sample"].astype(str)
+#     if any(quast_df['sample'].str.contains("_")):
+#         quast_df['sample'] = quast_df['sample'].apply(lambda x: x.rsplit('_', 1)[0])
 
+#     return quast_df
+
+def get_quast(quast_csv: str) -> pd.DataFrame:
+    quast_df = pd.read_csv(quast_csv, sep='\t', usecols=["Assembly", "Total length", "# contigs", "GC (%)", "N50", "L50", "N90", "L90"])
+    quast_df.rename(
+        columns={"Assembly": "sample", "Total length": "Total length (Mbp)"},
+        inplace=True,
+    )
+    quast_df["sample"] = (
+        quast_df["sample"]
+        .astype(str)
+        .str.replace("-", "_", regex=False)
+        .str.replace("_autocycler$", "", regex=True)
+    )
     return quast_df
 
 def get_checkm(checkm_csv: str) -> pd.DataFrame:
@@ -51,14 +65,31 @@ def get_checkm(checkm_csv: str) -> pd.DataFrame:
     checkm_df['sample'] = checkm_df['sample'].astype(str).str.replace('-', '_', regex=False)
     return checkm_df
 
-# def get_coverage(genome_size_txt, fastplong_csv):
-#     with open(genome_size_txt) as f:
-#         genome_size = float(f.read().strip())
 
+
+# def get_coverage(genome_size_txt_list, fastplong_csv):
+#     # Read fastplong summary
 #     fastplong_df = pd.read_csv(fastplong_csv, sep='\t')
 #     fastplong_df['sample'] = fastplong_df['sample'].astype(str).str.replace('-', '_')
-#     fastplong_df['coverage'] = round(fastplong_df['after_total_bases'] / genome_size, 1)
+
+#     # Build a sample:genome_size dictionary
+#     genome_sizes = {}
+#     for path in genome_size_txt_list:
+#         # sample = os.path.basename(path).replace('_genome_size.txt', '').replace('-', '_')
+#         # sample = os.path.basename(path)
+#         sample = os.path.basename(os.path.dirname(path)).replace('-', '_')
+#         with open(path) as f:
+#             if genome_sizes.get(sample) == "Unable to determine genome size":
+#                 genome_sizes[sample] = 0
+#             else:
+#                 genome_sizes[sample] = float(f.read().strip())
+#     # sample = os.path.basename(path).replace('_genome_size.txt', '').replace('-', '_')
+#     # Map genome size to each sample
+#     fastplong_df['genome_size'] = fastplong_df['sample'].map(genome_sizes)
+#     fastplong_df['coverage'] = fastplong_df['after_total_bases'] / fastplong_df['genome_size']
+
 #     coverage_df = fastplong_df[['sample', 'coverage']]
+
 #     return coverage_df
 
 def get_coverage(genome_size_txt_list, fastplong_csv):
@@ -69,15 +100,28 @@ def get_coverage(genome_size_txt_list, fastplong_csv):
     # Build a sample:genome_size dictionary
     genome_sizes = {}
     for path in genome_size_txt_list:
-        # sample = os.path.basename(path).replace('_genome_size.txt', '').replace('-', '_')
-        # sample = os.path.basename(path)
         sample = os.path.basename(os.path.dirname(path)).replace('-', '_')
         with open(path) as f:
-            genome_sizes[sample] = float(f.read().strip())
-    # sample = os.path.basename(path).replace('_genome_size.txt', '').replace('-', '_')
+            content = f.read().strip()
+            if content == "Unable to determine genome size":
+                genome_sizes[sample] = None
+            else:
+                try:
+                    genome_sizes[sample] = float(content)
+                except Exception:
+                    genome_sizes[sample] = None
+
     # Map genome size to each sample
     fastplong_df['genome_size'] = fastplong_df['sample'].map(genome_sizes)
-    fastplong_df['coverage'] = fastplong_df['after_total_bases'] / fastplong_df['genome_size']
+
+    # Calculate coverage, handling missing genome size
+    def coverage_or_message(row):
+        if row['genome_size'] is None or row['genome_size'] == 0:
+            return "Unable to calculate coverage "
+        else:
+            return row['after_total_bases'] / row['genome_size']
+
+    fastplong_df['coverage'] = fastplong_df.apply(coverage_or_message, axis=1)
 
     coverage_df = fastplong_df[['sample', 'coverage']]
 

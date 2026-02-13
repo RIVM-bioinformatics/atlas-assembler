@@ -3,9 +3,33 @@ import os
 import glob
 import json
 
+checkpoint check_filtered_reads:
+    input:
+        fastplong_json = OUT + "/fastplong/{sample}.json",  
+    output:
+        flag_filtered=OUT + "/coverage/{sample}_filtered_reads_flag.txt",
+    resources:
+        mem_gb=config["mem_gb"]["default"],
+    run:
+        # Read total_bases after filtering from JSON
+        with open(input.fastplong_json) as f:
+            fastplong_data = json.load(f)
+            total_reads_before_filtering = fastplong_data["summary"]["before_filtering"]["total_reads"]
+            total_reads_after_filtering = fastplong_data["summary"]["after_filtering"]["total_reads"]
+
+        percentage_passed_reads = round(total_reads_after_filtering / total_reads_before_filtering * 100)
+
+        if percentage_passed_reads > 15:
+            flag_filtered = "sufficient"
+        else:
+            flag_filtered = "low"
+        with open(output.flag_filtered, "w") as f:
+            f.write(flag_filtered)
+
 rule determine_genome_size:
     input:
         lambda wildcards: SAMPLES[wildcards.sample]["nanopore_input"],
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         OUT + "/autocycler/{sample}/genome_size.txt"
     conda:
@@ -22,35 +46,49 @@ rule determine_genome_size:
         OUT + "/log/benchmark/autocycler/{sample}/determine_genome_size.txt"
     shell:
         """
-       workflow/scripts/genome_size_raven.sh {input}/*fastq* {threads} >> {params.outdir_sample}/genome_size.txt
+   mkdir -p {params.outdir_sample}
+    flag="$(tr -d '\r\n' < {input.flag_filtered})"
+    if [ "$flag" = "sufficient" ]; then
+       workflow/scripts/genome_size_raven.sh {input[0]}/*fastq* {threads} > {params.outdir_sample}/genome_size.txt
+    else
+        echo "Unable to determine genome size" > {output}
+    fi  
         """
 
 checkpoint check_coverage:
     input:
         genome_size = OUT + "/autocycler/{sample}/genome_size.txt",
         fastplong_json = OUT + "/fastplong/{sample}.json",
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         flag=OUT + "/coverage/{sample}_coverage_flag.txt",
     resources:
         mem_gb=config["mem_gb"]["default"],
     run:
-        # Read genome size
-        with open(input.genome_size) as f:
-            genome_size = float(f.read().strip())
+        with open(input.flag_filtered) as f:
+            filtered_flag = f.read().strip()
+    
+        if filtered_flag == "sufficient":
+            # Read genome size
+            with open(input.genome_size) as f:
+                genome_size = float(f.read().strip())
 
-        # Read total_bases after filtering from JSON
-        with open(input.fastplong_json) as f:
-            fastplong_data = json.load(f)
-            total_bases = fastplong_data["summary"]["after_filtering"]["total_bases"]
+            # Read total_bases after filtering from JSON
+            with open(input.fastplong_json) as f:
+                fastplong_data = json.load(f)
+                total_bases = fastplong_data["summary"]["after_filtering"]["total_bases"]
 
-        coverage = round(total_bases / genome_size)
+            coverage = round(total_bases / genome_size)
 
-        if coverage > 30:
-            flag = "sufficient"
+            if coverage > 30:
+                flag = "sufficient"
+            else:
+                flag = "low"
+            with open(output.flag, "w") as f:
+                f.write(flag)
         else:
-            flag = "low"
-        with open(output.flag, "w") as f:
-            f.write(flag)
+            with open(output.flag, "w") as f:
+                f.write("low")
 
 rule autocycler_subsample:
     input:
@@ -60,6 +98,7 @@ rule autocycler_subsample:
         filtered = OUT + "/fastplong/{sample}.fastq",
         genome_size = OUT + "/autocycler/{sample}/genome_size.txt",
         flag=lambda wildcards: checkpoints.check_coverage.get(sample=wildcards.sample).output.flag,
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output: # This is the only part that is essentially hardcoded because this says you explicitly use 4 subsets - You'd have to script the output otherwise and multiply by n of subsets used.
         sample_01 = temp(OUT + "/autocycler/{sample}/subsampled_reads/sample_01.fastq"),
         sample_02 = temp(OUT + "/autocycler/{sample}/subsampled_reads/sample_02.fastq"),
@@ -81,14 +120,13 @@ rule autocycler_subsample:
         OUT + "/log/benchmark/autocycler/{sample}/subsample.txt"
     shell:
         """
-genome_size=$(<{input.genome_size})
-
-if [ $(< {input.flag}) == "sufficient" ]; then
+if [ $(< {input.flag}) == "sufficient" ] && [ $(< {input.flag_filtered}) == "sufficient" ]; then
+    genome_size=$(<{input.genome_size})
     autocycler subsample --reads {input.filtered} --out_dir {params.outdir_sample}/subsampled_reads --genome_size ${{genome_size}} \
     && echo "Continue to run Autocycler" > {output.completed}
 else
     mkdir -p {params.subsample_dir}
-    echo "Unable to run Autocycler as coverage is $coverage x which is less than 30 x" > {output.completed}
+    echo "Unable to run Autocycler as coverage is less than 30 x" > {output.completed}
     touch {output.sample_01} {output.sample_02} {output.sample_03} {output.sample_04}
 fi 
         """
@@ -135,7 +173,9 @@ fi
 rule autocycler_flye:
     input:
         fastq = OUT + "/autocycler/{sample}/subsampled_reads/sample_{subset}.fastq",
-        genome_size = OUT + "/autocycler/{sample}/genome_size.txt"
+        genome_size = OUT + "/autocycler/{sample}/genome_size.txt",
+        flag=lambda wildcards: checkpoints.check_coverage.get(sample=wildcards.sample).output.flag,
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         OUT + "/autocycler/{sample}/assemblies/flye_{sample}_{subset}.fasta"
     conda:
@@ -149,15 +189,14 @@ rule autocycler_flye:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
         tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/flye_{sample}_{subset}",
         assembly_dir = OUT + "/autocycler/{sample}/assemblies/",
-        evaluation_file = OUT + "/autocycler/{sample}/subsampled_reads_completed.txt"
+        # evaluation_file = OUT + "/autocycler/{sample}/subsampled_reads_completed.txt"
     log:
         OUT + "/log/autocycler/{sample}/flye_{sample}_{subset}.log"
     benchmark:
         OUT + "/log/benchmark/autocycler/{sample}/flye_{sample}_{subset}.txt"
     shell:
         """
-    read -r checkpoint _ < {params.evaluation_file}
-    if [[ "$checkpoint" == "Continue" ]]
+    if [ $(< {input.flag}) == "sufficient" ] && [ $(< {input.flag_filtered}) == "sufficient" ];
     then
         echo "Evaluating to run Flye"
         if [ {resources.retry_count} == 4 ]; then 
@@ -183,6 +222,7 @@ rule autocycler_miniasm:
         fastq = OUT + "/autocycler/{sample}/subsampled_reads/sample_{subset}.fastq",
         genome_size = OUT + "/autocycler/{sample}/genome_size.txt",
         flag=lambda wildcards: checkpoints.check_coverage.get(sample=wildcards.sample).output.flag,
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         OUT + "/autocycler/{sample}/assemblies/miniasm_{sample}_{subset}.fasta"
     conda:
@@ -202,7 +242,7 @@ rule autocycler_miniasm:
         OUT + "/log/benchmark/autocycler/{sample}/miniasm_{sample}_{subset}.txt"
     shell:
         """
-if [ $(< {input.flag}) == "sufficient" ];
+if [ $(< {input.flag}) == "sufficient" ] && [ $(< {input.flag_filtered}) == "sufficient" ];
 then
     genome_size=$(<{input.genome_size})
     mkdir -p {params.tmp_fasta_dir}
@@ -264,7 +304,9 @@ fi
 rule autocycler_nextdenovo:
     input:
         fastq = OUT + "/autocycler/{sample}/subsampled_reads/sample_{subset}.fastq",
-        genome_size = OUT + "/autocycler/{sample}/genome_size.txt"
+        genome_size = OUT + "/autocycler/{sample}/genome_size.txt",
+        flag=lambda wildcards: checkpoints.check_coverage.get(sample=wildcards.sample).output.flag,
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         OUT + "/autocycler/{sample}/assemblies/nextdenovo_{sample}_{subset}.fasta"
     conda:
@@ -277,15 +319,14 @@ rule autocycler_nextdenovo:
         tmp_fasta_dir = OUT + "/autocycler/{sample}/tmp_assemblies/",
         tmp_fasta_name = OUT + "/autocycler/{sample}/tmp_assemblies/nextdenovo_{sample}_{subset}",
         assembly_dir = OUT + "/autocycler/{sample}/assemblies/",
-        evaluation_file = OUT + "/autocycler/{sample}/subsampled_reads_completed.txt"
+        # evaluation_file = OUT + "/autocycler/{sample}/subsampled_reads_completed.txt"
     log:
         OUT + "/log/autocycler/{sample}/nextdenovo_{sample}_{subset}.log"
     benchmark:
         OUT + "/log/benchmark/autocycler/{sample}/nextdenovo_{sample}_{subset}.txt"
     shell:
         """
-read -r checkpoint _ < {params.evaluation_file}
-if [[ "$checkpoint" == "Continue" ]]
+if [ $(< {input.flag}) == "sufficient" ] && [ $(< {input.flag_filtered}) == "sufficient" ];
 then
     genome_size=$(<{input.genome_size})
     mkdir -p {params.tmp_fasta_dir}
@@ -304,6 +345,7 @@ rule autocycler_raven:
         fastq = OUT + "/autocycler/{sample}/subsampled_reads/sample_{subset}.fastq",
         genome_size = OUT + "/autocycler/{sample}/genome_size.txt",
         flag=lambda wildcards: checkpoints.check_coverage.get(sample=wildcards.sample).output.flag,
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         OUT + "/autocycler/{sample}/assemblies/raven_{sample}_{subset}.fasta"
     conda:
@@ -325,7 +367,7 @@ rule autocycler_raven:
         OUT + "/log/benchmark/autocycler/{sample}/raven_{sample}_{subset}.txt"
     shell:
         """
-    if [ $(< {input.flag}) == "sufficient" ];
+    if [ $(< {input.flag}) == "sufficient" ] && [ $(< {input.flag_filtered}) == "sufficient" ];
     then
         if [ {resources.retry_count} == 4 ]; then 
             if [ ! -f {output} ]; then 
@@ -351,6 +393,7 @@ rule autocycler_collect:
         all_fasta = expand([OUT + "/autocycler/{{sample}}/assemblies/{assembler}_{{sample}}_{subset}.fasta"], assembler = assembler_list, subset = subsets_used),
         genome_size = OUT + "/autocycler/{sample}/genome_size.txt",
         flag=lambda wildcards: checkpoints.check_coverage.get(sample=wildcards.sample).output.flag,
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         OUT + "/autocycler/{sample}/assemblies_completed.txt"
     conda:
@@ -368,7 +411,7 @@ rule autocycler_collect:
         OUT + "/log/benchmark/autocycler/{sample}/collect.txt"
     shell:
         """
-if [ $(< {input.flag}) == "sufficient" ];
+if [ $(< {input.flag}) == "sufficient" ] && [ $(< {input.flag_filtered}) == "sufficient" ];
 then
     for fasta in {input.all_fasta} ; do
         if [ -f "${{fasta}}" ] && [ ! -s "${{fasta}}" ]; then
@@ -389,6 +432,7 @@ rule autocycler_compress:
     input:
         assembly_file = OUT + "/autocycler/{sample}/assemblies_completed.txt",
         flag=lambda wildcards: checkpoints.check_coverage.get(sample=wildcards.sample).output.flag,
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         compress = OUT + "/autocycler/{sample}/compress_completed.txt"
     conda:
@@ -411,7 +455,7 @@ rule autocycler_compress:
         OUT + "/log/benchmark/autocycler/{sample}/compress.txt"
     shell:
         """
-if [ $(< {input.flag}) == "sufficient" ];
+if [ $(< {input.flag}) == "sufficient" ] && [ $(< {input.flag_filtered}) == "sufficient" ];
 then
     # Track iteration
     iteration=1
@@ -432,6 +476,7 @@ rule autocycler_cluster:
     input:
         compress = OUT + "/autocycler/{sample}/compress_completed.txt",
         flag=lambda wildcards: checkpoints.check_coverage.get(sample=wildcards.sample).output.flag,
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         OUT + "/autocycler/{sample}/cluster_completed.txt"
     conda:
@@ -449,7 +494,7 @@ rule autocycler_cluster:
         OUT + "/log/benchmark/autocycler/{sample}/cluster.txt"
     shell:
        """
-if [ $(< {input.flag}) == "sufficient" ];
+if [ $(< {input.flag}) == "sufficient" ] && [ $(< {input.flag_filtered}) == "sufficient" ];
 then
     autocycler cluster -a {params.autocycler_dir} \
     && touch {output}
@@ -463,6 +508,7 @@ rule autocycler_trim:
     input:
         OUT + "/autocycler/{sample}/cluster_completed.txt",
         flag=lambda wildcards: checkpoints.check_coverage.get(sample=wildcards.sample).output.flag,
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         OUT + "/autocycler/{sample}/trim_completed.txt"
     conda:
@@ -480,7 +526,7 @@ rule autocycler_trim:
         OUT + "/log/benchmark/autocycler/{sample}/trim.txt"
     shell:
        """
-if [ $(< {input.flag}) == "sufficient" ];
+if [ $(< {input.flag}) == "sufficient" ] && [ $(< {input.flag_filtered}) == "sufficient" ];
 then
     for c in {params.autocycler_qc_pass_dir}/cluster_*; do
     autocycler trim -c ${{c}}
@@ -496,6 +542,7 @@ rule autocycler_resolve:
     input:
         OUT + "/autocycler/{sample}/trim_completed.txt",
         flag=lambda wildcards: checkpoints.check_coverage.get(sample=wildcards.sample).output.flag,
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         OUT + "/autocycler/{sample}/resolve_completed.txt"
     conda:
@@ -513,7 +560,7 @@ rule autocycler_resolve:
         OUT + "/log/benchmark/autocycler/{sample}/resolve.txt"
     shell:
         """
-if [ $(< {input.flag}) == "sufficient" ];
+if [ $(< {input.flag}) == "sufficient" ] && [ $(< {input.flag_filtered}) == "sufficient" ];
 then
     for c in {params.autocycler_qc_pass_dir}/cluster_*; do
     autocycler resolve -c ${{c}}
@@ -528,6 +575,7 @@ rule autocycler_combine:
     input:
         OUT + "/autocycler/{sample}/resolve_completed.txt",
         flag=lambda wildcards: checkpoints.check_coverage.get(sample=wildcards.sample).output.flag,
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         fasta = OUT + "/autocycler/all_consensus_assembly/{sample}-autocycler.fasta",
         gfa = OUT + "/autocycler/{sample}/autocycler_out/consensus_assembly.gfa"
@@ -548,7 +596,7 @@ rule autocycler_combine:
         OUT + "/log/benchmark/autocycler/{sample}/combine.txt"
     shell:
        """
-if [ $(< {input.flag}) == "sufficient" ];
+if [ $(< {input.flag}) == "sufficient" ] && [ $(< {input.flag_filtered}) == "sufficient" ];
 then
     autocycler combine -a {params.autocycler_dir} -i {params.autocycler_qc_pass_dir}/cluster_*/5_final.gfa && \
     sleep 30 && \
@@ -563,6 +611,7 @@ rule autocycler_completed:
         fasta = OUT + "/autocycler/all_consensus_assembly/{sample}-autocycler.fasta",
         gfa = OUT + "/autocycler/{sample}/autocycler_out/consensus_assembly.gfa",
         flag=lambda wildcards: checkpoints.check_coverage.get(sample=wildcards.sample).output.flag,
+        flag_filtered=lambda wildcards: checkpoints.check_filtered_reads.get(sample=wildcards.sample).output.flag_filtered,
     output:
         OUT + "/autocycler/{sample}/autocycler_completed.txt"
     conda:
@@ -590,7 +639,7 @@ rule autocycler_completed:
         OUT + "/log/benchmark/autocycler/{sample}/completed.txt"
     shell: # Should probably put logic below inside a single .py or .sh script
         """
-if [ $(< {input.flag}) == "sufficient" ];
+if [ $(< {input.flag}) == "sufficient" ] && [ $(< {input.flag_filtered}) == "sufficient" ];
 then
     counter=$(<{params.autocycler_counter})
     percentage=$(( (${{counter}} - 1) * 10 + {params.percentage} )) 

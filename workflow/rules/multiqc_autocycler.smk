@@ -2,7 +2,6 @@ rule multiqc:
     input:
        OUT + "/fastplong/fastplong_summary.tsv",
        expand(OUT + "/identify_species/consensus_assembly/{sample}/{sample}_bracken_species.kreport2", sample=SAMPLES),
-    #    OUT + "/qc_subset_assembly/quast/report.tsv",
        OUT + "/qc_consensus_assembly/quast/report.tsv",
        OUT + "/qc_consensus_assembly/checkm/checkm_report.tsv",
        OUT + "/nanoplot/NanoStats_summary.tsv",
@@ -10,7 +9,6 @@ rule multiqc:
     output:
         OUT + "/multiqc/multiqc.html",
         phred=OUT + "/multiqc/multiqc_data/multiqc_data.json",
-        # seq_len=OUT + "/multiqc/multiqc_data/multiqc_fastqc.txt",
     message:
         "Making MultiQC report."
     conda:
@@ -28,4 +26,5 @@ rule multiqc:
         multiqc --interactive --force --config {params.config_file} \
             -o {params.output_dir} \
             -n multiqc.html {input} &> {log}
+    
         """
