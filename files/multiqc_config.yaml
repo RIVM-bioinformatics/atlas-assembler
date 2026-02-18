@@ -28,6 +28,10 @@ custom_data:
     section_name: 'Nanoplot Statistics'
     description: 'Plotting tool for long read sequencing data and alignments.'
     plot_type: 'table'
+  quast_stats:
+    section_name: 'QUAST'
+    description: 'QUAST evaluates genome assemblies by comparing them to reference genomes and assessing various assembly metrics.'
+    plot_type: 'table'
 
 sp:
   CheckM_stats:
@@ -35,7 +39,9 @@ sp:
   FastpLong_stats:
     fn: 'fastplong_summary*'
   NanoPlot_stats:
-    fn: 'NanoStats_summary*'   
+    fn: 'NanoStats_summary*'
+  quast_stats:
+    fn: 'transposed_report*'
 table_cond_formatting_rules:
   completeness:
     pass:

@@ -23,16 +23,30 @@ def get_fastp(fastp_csv: str) -> pd.DataFrame:
     fastp_df['sample'] = fastp_df['sample'].astype(str).str.replace('-', '_')
     return fastp_df
 
-def get_quast(quast_csv: str) -> pd.DataFrame:
-    quast_df = pd.read_csv(quast_csv, sep='\t', usecols=["Assembly", "Total length", "# contigs", "N50", "GC (%)"])
-    quast_df.rename(
-    columns={"Assembly": "sample", "Total length": "Total length (Mbp)"},
-    inplace=True,
-)
-    quast_df["sample"] = quast_df["sample"].astype(str)
-    if any(quast_df['sample'].str.contains("_")):
-        quast_df['sample'] = quast_df['sample'].apply(lambda x: x.rsplit('_', 1)[0])
+# def get_quast(quast_csv: str) -> pd.DataFrame:
+#     quast_df = pd.read_csv(quast_csv, sep='\t', usecols=["Assembly", "Total length", "# contigs", "N50", "GC (%)"])
+#     quast_df.rename(
+#     columns={"Assembly": "sample", "Total length": "Total length (Mbp)"},
+#     inplace=True,
+# )
+#     quast_df["sample"] = quast_df["sample"].astype(str)
+#     if any(quast_df['sample'].str.contains("_")):
+#         quast_df['sample'] = quast_df['sample'].apply(lambda x: x.rsplit('_', 1)[0])
 
+#     return quast_df
+
+def get_quast(quast_csv: str) -> pd.DataFrame:
+    quast_df = pd.read_csv(quast_csv, sep='\t', usecols=["Assembly", "Total length", "# contigs", "GC (%)", "N50", "L50", "N90", "L90"])
+    quast_df.rename(
+        columns={"Assembly": "sample", "Total length": "Total length (Mbp)"},
+        inplace=True,
+    )
+    quast_df["sample"] = (
+        quast_df["sample"]
+        .astype(str)
+        .str.replace("-", "_", regex=False)
+        .str.replace("_autocycler$", "", regex=True)
+    )
     return quast_df
 
 def get_checkm(checkm_csv: str) -> pd.DataFrame:
