@@ -204,6 +204,7 @@ class AtlasAssembler(Pipeline):
         self.auto_exe: str = args.auto_exe
         self.skani_max_no_hits = args.skani_max_no_hits
         self.skani_gtdb_db_dir = args.skani_gtdb_db_dir.resolve()
+        self.time_limit: int = args.time_limit
         return args
     
     # Extra class methods for this pipeline can be defined here
@@ -232,7 +233,8 @@ class AtlasAssembler(Pipeline):
                     self.snakemake_args["singularity_args"]
                 ] # paths that singularity should be able to read from can be bound by adding to the above list
             )
-        
+        if self.time_limit < 300:
+            self.time_limit = 300
         self.update_sample_dict_with_metadata()
 
         # Extra class methods for this pipeline can be invoked here
@@ -265,6 +267,7 @@ class AtlasAssembler(Pipeline):
             "auto_exe": str(self.auto_exe),
             "skani_gtdb_db_dir": str(self.skani_gtdb_db_dir),
             "skani_max_no_hits": int(self.skani_max_no_hits),
+            "time-limit": str(self.time_limit),
         }
 
 
