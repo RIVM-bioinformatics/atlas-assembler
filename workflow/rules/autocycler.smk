@@ -88,7 +88,7 @@ if [ $(< {input.flag}) == "sufficient" ]; then
     && echo "Continue to run Autocycler" > {output.completed}
 else
     mkdir -p {params.subsample_dir}
-    echo "Unable to run Autocycler as coverage is $coverage x which is less than 30 x" > {output.completed}
+    echo "Unable to run Autocycler as coverage is less than 30 x" > {output.completed}
     touch {output.sample_01} {output.sample_02} {output.sample_03} {output.sample_04}
 fi 
         """
