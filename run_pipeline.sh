@@ -11,6 +11,14 @@ output_dir="${2%/}"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null 2>&1 && pwd )"
 cd ${DIR}
+
+#check if there is an exclusion file, if so change the parameter
+if [ ! -z "${irods_input_sequencing__run_id}" ] && [ -f "/data/BioGrid/NGSlab/sample_sheets/${irods_input_sequencing__run_id}.exclude" ]
+then
+  EXCLUSION_FILE_COMMAND="-ex /data/BioGrid/NGSlab/sample_sheets/${irods_input_sequencing__run_id}.exclude"
+else
+  EXCLUSION_FILE_COMMAND=""
+fi
 #----------------------------------------------#
 ## make sure conda works
 
@@ -54,7 +62,7 @@ fi
 
 set -euo pipefail
 
-python atlas_assembler.py --queue "${QUEUE}" -i "${input_dir}" -o "${output_dir}" --sequencing-tech "nanopore"
+python atlas_assembler.py --queue "${QUEUE}" -i "${input_dir}" -o "${output_dir}"  $EXCLUSION_FILE_COMMAND --sequencing-tech "nanopore"
 
 result=$?
 
