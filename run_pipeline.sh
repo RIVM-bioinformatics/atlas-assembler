@@ -13,9 +13,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null 2>&1 && pwd )"
 cd ${DIR}
 
 #check if there is an exclusion file, if so change the parameter
-if [ ! -z "${irods_runsheet_sys__dataset_id}" ] && [ -f "/data/BioGrid/NGSlab/sample_sheets/${irods_runsheet_sys__dataset_id}.exclude" ]
+if [ ! -z "${irods_input_sys__dataset_id}" ] && [ -f "/data/BioGrid/NGSlab/sample_sheets/${irods_input_sys__dataset_id}.exclude" ]
 then
-  EXCLUSION_FILE_COMMAND="-ex /data/BioGrid/NGSlab/sample_sheets/${irods_runsheet_sys__dataset_id}.exclude"
+  EXCLUSION_FILE_COMMAND="-ex /data/BioGrid/NGSlab/sample_sheets/${irods_input_sys__dataset_id}.exclude"
 else
   EXCLUSION_FILE_COMMAND=""
 fi
