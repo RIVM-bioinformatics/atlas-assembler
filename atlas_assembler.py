@@ -184,6 +184,14 @@ class AtlasAssembler(Pipeline):
             dest="skani_max_no_hits",
             help="Maximum number of hits to report for each contig in the Skani step. Default is 1, change value for debugging or development only.",
     )
+        self.add_argument(
+                "-bd",
+                "--buscodb-dir",
+                type=Path,
+                metavar="DIR",
+                default="/mnt/db/juno/atlas_assembler/busco_downloads",
+                help="Relative or absolute path to the BUSCO database. Default: /mnt/db/juno/atlas_assembler/busco_downloads.",
+            )
     def _parse_args(self) -> argparse.Namespace:
         args = super()._parse_args()
 
@@ -205,6 +213,7 @@ class AtlasAssembler(Pipeline):
         self.skani_max_no_hits = args.skani_max_no_hits
         self.skani_gtdb_db_dir = args.skani_gtdb_db_dir.resolve()
         self.time_limit: int = args.time_limit
+        self.buscodb_dir: Path = args.buscodb_dir.resolve()
         return args
     
     # Extra class methods for this pipeline can be defined here
@@ -268,6 +277,7 @@ class AtlasAssembler(Pipeline):
             "skani_gtdb_db_dir": str(self.skani_gtdb_db_dir),
             "skani_max_no_hits": int(self.skani_max_no_hits),
             "time-limit": str(self.time_limit),
+            "buscodb_dir": str(self.buscodb_dir),
         }
 
 

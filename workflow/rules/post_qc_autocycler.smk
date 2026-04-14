@@ -69,6 +69,7 @@ rule busco:
         mode = "genome",
         lineage = "bacteria_odb10",
         short_summary_filename = "busco_results_{sample}",
+        busco_db = config["buscodb_dir"],
         # options = config['busco']['options']
     threads:
         config["threads"]["busco"]
@@ -78,7 +79,7 @@ rule busco:
         """
         if [ $(< {input.flag}) == "sufficient" ]; then
             busco -i {input.contigs} --out_path {output.busco_out} -l {params.lineage} -o {params.short_summary_filename}\
-            -m {params.mode} -f
+            -m {params.mode} -f --download_path {params.busco_db} --offline &> {log}
         else
             echo "Not enough coverage to run BUSCO" > {output.short_summary}
         fi

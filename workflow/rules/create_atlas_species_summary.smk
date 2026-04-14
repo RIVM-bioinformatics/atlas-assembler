@@ -1,7 +1,7 @@
 rule top_species_multireport:
     input:
         bracken=expand(
-            OUT + "/identify_species/reads/{sample}/{sample}_species_content.txt",
+            OUT + "/identify_species/consensus_assembly/{sample}/{sample}_species_content.txt",
             sample=SAMPLES,
         ),
         skani=OUT + "/identify_species/skani_results.tsv",
