@@ -22,7 +22,13 @@ rule determine_genome_size:
         OUT + "/log/benchmark/autocycler/{sample}/determine_genome_size.txt"
     shell:
         """
-       workflow/scripts/genome_size_raven.sh {input}/*fastq* {threads} >> {params.outdir_sample}/genome_size.txt
+        input_path="{input}"
+        if [ -d "$input_path" ]; then
+            fastq_files="$input_path"/*fastq*
+        else
+            fastq_files="$input_path"
+        fi
+        workflow/scripts/genome_size_raven.sh $fastq_files {threads} >> {params.outdir_sample}/genome_size.txt
         """
 
 checkpoint check_coverage:
@@ -54,9 +60,14 @@ checkpoint check_coverage:
 
 rule autocycler_subsample:
     input:
-        fastq = lambda wildcards: glob.glob(
-            os.path.join(SAMPLES[wildcards.sample]["nanopore_input"], "*.fastq*")
-        )[0],
+        # fastq = lambda wildcards: glob.glob(
+        #     os.path.join(SAMPLES[wildcards.sample]["nanopore_input"], "*.fastq*")
+        # )[0],
+        fastq = lambda wildcards: (
+            SAMPLES[wildcards.sample]["nanopore_input"]
+            if SAMPLES[wildcards.sample]["nanopore_input"].endswith(".fastq") or SAMPLES[wildcards.sample]["nanopore_input"].endswith(".fastq.gz")
+            else glob.glob(os.path.join(SAMPLES[wildcards.sample]["nanopore_input"], "*.fastq*"))[0]
+        ),
         filtered = OUT + "/fastplong/{sample}.fastq",
         genome_size = OUT + "/autocycler/{sample}/genome_size.txt",
         flag=lambda wildcards: checkpoints.check_coverage.get(sample=wildcards.sample).output.flag,
