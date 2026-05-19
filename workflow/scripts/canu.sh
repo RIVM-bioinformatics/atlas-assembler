@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-# This script is a wrapper for getting a genome size estimate in a single command using Raven.
+# This script is a wrapper for running Canu in a single command.
 
 # Usage:
-#   raven.sh <read_fastq> <threads>
+#   canu.sh <read_fastq> <assembly_prefix> <threads> <genome_size>
 
 # Requirements:
-#   Raven: https://github.com/lbcb-sci/raven
-#   seqtk: https://github.com/lh3/seqtk
+#   Canu: https://github.com/marbl/canu
+#   canu_trim.py: https://github.com/rrwick/Autocycler/blob/main/scripts/canu_trim.py
 
 # Copyright 2024 Ryan Wick (rrwick@gmail.com)
 # https://github.com/rrwick/Autocycler
@@ -26,11 +26,13 @@ set -e
 
 # Get arguments.
 reads=$1        # input reads FASTQ
-threads=$2      # thread count
+assembly=$2     # output assembly prefix (not including file extension)
+threads=$3      # thread count
+genome_size=$4  # estimated genome size
 
 # Validate input parameters.
-if [[ -z "$reads" || -z "$threads" ]]; then
-    >&2 echo "Usage: $0 <read_fastq> <threads>"
+if [[ -z "$reads" || -z "$assembly" || -z "$threads" || -z "$genome_size" ]]; then
+    >&2 echo "Usage: $0 <read_fastq> <assembly_prefix> <threads> <genome_size>"
     exit 1
 fi
 
@@ -41,12 +43,18 @@ if [[ ! -f "$reads" ]]; then
 fi
 
 # Ensure the requirements are met.
-for cmd in raven seqtk cut; do
+for cmd in canu canu_trim.py; do
     if ! command -v "$cmd" &> /dev/null; then
         >&2 echo "Error: $cmd not found in PATH"
         exit 1
     fi
 done
+
+# Ensure the output prefix will work.
+if ! touch "$assembly".fasta &> /dev/null; then
+    >&2 echo "Error: cannot write to this location: $assembly"
+    exit 1
+fi
 
 # Create a temporary directory which is deleted when the script exits.
 temp_dir=$(mktemp -d)
@@ -55,14 +63,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Run Raven.
-raven --threads "$threads" --disable-checkpoints "$reads" > "$temp_dir"/raven.fasta
+#Run Canu.
+canu -p canu -d "$temp_dir" -fast genomeSize="$genome_size" useGrid=false maxThreads="$threads" -nanopore-raw "$reads"
 
-# Check if Raven ran successfully.
-if [[ ! -s "$temp_dir"/raven.fasta ]]; then
-    >&2 echo "Error: Raven assembly failed."
+#Check if Canu ran successfully.
+if [[ ! -s "$temp_dir"/canu.contigs.fasta ]]; then
+    >&2 echo "Error: Canu assembly failed"
     exit 1
 fi
 
-# Print genome size.
-seqtk size "$temp_dir"/raven.fasta | cut -f2
+# Trim the contigs
+canu_trim.py "$temp_dir"/canu.contigs.fasta > "$assembly".fasta

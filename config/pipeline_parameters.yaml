@@ -14,30 +14,34 @@ threads:
     genome_size: 16
     canu: 18
     miniasm: 8
-    necat: 4
+    necat: 8
     nextdenovo: 8
     raven: 8
+    skani: 1
+    autocycler_compress: 4
 
 mem_gb:
     default: 4
-    nanoplot: 8
+    nanoplot: 32
     chopper: 8
     fastplong: 12
-    flye: 20
-    kraken2: 20
-    multiqc: 8
+    flye: 240
+    kraken2: 80
+    multiqc: 32
     medaka: 20
-    quast: 8
-    checkm: 8
-    parsing: 8
-    busco: 4
-    genome_size: 16
-    canu: 24
-    miniasm: 16
-    necat: 12
-    nextdenovo: 12
-    raven: 16
-
+    quast: 32
+    checkm: 32
+    parsing: 32
+    busco: 16
+    genome_size: 256
+    canu: 432
+    miniasm: 128
+    necat: 128
+    nextdenovo: 96
+    raven: 128
+    skani: 100
+    autocycler_compress: 16
+    
 run_time_minutes:
     default: 30
     chopper: 30
@@ -47,3 +51,5 @@ run_time_minutes:
     necat: 60
     nextdenovo: 60
     raven: 60
+    flye: 60
+    autocycler_compress: 60

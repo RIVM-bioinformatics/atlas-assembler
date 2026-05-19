@@ -1,8 +1,7 @@
-name: checkM
+name: skani
 channels:
   - bioconda
   - conda-forge
   - nodefaults
 dependencies:
-    - checkm-genome==1.2.3
-    - setuptools=67.*
+  - skani==0.2.2 

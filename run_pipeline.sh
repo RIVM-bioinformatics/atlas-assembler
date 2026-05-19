@@ -1,47 +1,53 @@
 #!/bin/bash
 
+# Wrapper for juno typing pipeline
+
 set -euo pipefail
 
 #----------------------------------------------#
 # User parameters
-if [ ! -z "${1}" ] || [ ! -z "${2}" ] #|| [ ! -z "${irods_input_projectID}" ]
-then
-   input_dir="${1}"
-   output_dir="${2}"
-#    PROJECT_NAME="${irods_input_projectID}"
-else
-    echo "One of the parameters is missing, make sure there is an input directory, output directory and project name(param 1, 2 or irods_input_projectID)."
-    exit 1
-fi
+input_dir="${1%/}"
+output_dir="${2%/}"
 
-if [ ! -d "${input_dir}" ] || [ ! -d "${output_dir}" ]
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null 2>&1 && pwd )"
+cd ${DIR}
+
+#check if there is an exclusion file, if so change the parameter
+if [ ! -z "${irods_input_sys__dataset_id}" ] && [ -f "/data/BioGrid/NGSlab/sample_sheets/${irods_input_sys__dataset_id}.exclude" ]
 then
-  echo "The input directory $input_dir, output directory $output_dir or fastq dir ${input_dir}/clean_fastq does not exist"
-  exit 1
+  EXCLUSION_FILE_COMMAND="-ex /data/BioGrid/NGSlab/sample_sheets/${irods_input_sys__dataset_id}.exclude"
 else
-  input_fastq="${input_dir}/clean_fastq"
+  EXCLUSION_FILE_COMMAND=""
 fi
+#----------------------------------------------#
+## make sure conda works
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/mnt/miniconda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/mnt/miniconda/etc/profile.d/conda.sh" ]; then
+        . "/mnt/miniconda/etc/profile.d/conda.sh"
+    else
+        export PATH="/mnt/miniconda/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<export -f conda
+export -f __conda_activate
+export -f __conda_reactivate
+export -f __conda_hashr
+
 
 #----------------------------------------------#
-# Create/update necessary environments
-PATH_MAMBA_YAML="envs/mamba.yaml"
-PATH_MASTER_YAML="envs/template_master.yaml"
-MAMBA_NAME=$(head -n 1 ${PATH_MAMBA_YAML} | cut -f2 -d ' ')
-MASTER_NAME=$(head -n 1 ${PATH_MASTER_YAML} | cut -f2 -d ' ')
+# Create the environment
 
-echo -e "\nUpdating necessary environments to run the pipeline..."
-
-# Removing strict mode because it sometimes breaks the code for 
-# activating an environment and for testing whether some variables
-# are set or not
-set +euo pipefail 
-
-conda env update -f "${PATH_MAMBA_YAML}"
-source activate "${MAMBA_NAME}"
-
-mamba env update -f "${PATH_MASTER_YAML}"
-
-source activate "${MASTER_NAME}"
+# we can use the base installation of mamba to create the environment. 
+# Swapping to a parent env is not necessary anymore.
+mamba env create -f envs/atlas_assembler.yaml --name pipeline_env
+conda activate pipeline_env
 
 #----------------------------------------------#
 # Run the pipeline
@@ -56,23 +62,38 @@ fi
 
 set -euo pipefail
 
-python template.py --queue "${QUEUE}" -i "${input_dir}" -o "${output_dir}"
+python atlas_assembler.py --queue "${QUEUE}" -i "${input_dir}" -o "${output_dir}"  $EXCLUSION_FILE_COMMAND --sequencing-tech "nanopore"
 
 result=$?
 
 # Propagate metadata
 
-set +euo pipefail
+set +euo pipefail 
 
+# SEQ_KEYS=
+# SEQ_ENV=`env | grep irods_input_sequencing`
+# for SEQ_AVU in ${SEQ_ENV}
+# do
+#     SEQ_KEYS="${SEQ_KEYS} ${SEQ_AVU%%=*}"
+# done
+
+# for key in $SEQ_KEYS irods_input_illumina__Flowcell irods_input_illumina__Instrument \
+#     irods_input_illumina__Date irods_input_illumina__Run_number irods_input_illumina__Run_Id
+# do
+#     if [ ! -z ${!key} ] ; then
+#         attrname=${key:12}
+#         attrname=${attrname/__/::}
+#         echo "${attrname}: '${!key}'" >> ${output_dir}/metadata.yml
+#     fi
+# done
 SEQ_KEYS=
-SEQ_ENV=`env | grep irods_input_sequencing`
+SEQ_ENV=`env | grep -e minion -e sequencing`
 for SEQ_AVU in ${SEQ_ENV}
 do
     SEQ_KEYS="${SEQ_KEYS} ${SEQ_AVU%%=*}"
 done
 
-for key in $SEQ_KEYS irods_input_illumina__Flowcell irods_input_illumina__Instrument \
-    irods_input_illumina__Date irods_input_illumina__Run_number irods_input_illumina__Run_Id
+for key in $SEQ_KEYS import_foldername import_timestamp
 do
     if [ ! -z ${!key} ] ; then
         attrname=${key:12}
@@ -81,6 +102,11 @@ do
     fi
 done
 
-set -euo pipefail
+set -euo pipefail 
 
 exit ${result}
+# Produce svg with rules
+# snakemake --config sample_sheet=config/sample_sheet.yaml \
+#             --configfiles config/pipeline_parameters.yaml config/user_parameters.yaml \
+#             -j 1 --use-conda \
+#             --rulegraph | dot -Tsvg > files/DAG.svg

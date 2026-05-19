@@ -6,7 +6,7 @@ channels:
   - nodefaults
 dependencies:
   - git=2.40.1
-  - mamba=1.3.1
+  # - mamba=1.3.1
   - pandas=1.5.3
   - snakemake=7.32.0
   - pip=23.3.2
@@ -15,11 +15,13 @@ dependencies:
   - seqiolib
   - tabulate=0.8.9
   - setuptools=67.*
+  - setuptools=67.*
   # - conda=24.5.0 # added this because it seems to crash on later version
   # - libmamba=1.5.8 
   # - mamba=1.5.8 #0.21.2 / conda 4.11.0 # seems to be unable to install snakemake envs with v2.0.5
   - pigz #2.6
   - pymssql
+  - openpyxl
   - openpyxl
 
   - pip:

@@ -4,8 +4,10 @@ rule nanoplot:
         # gz_chopper = OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz",
         # gz_filtlong = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz"
         filtered = OUT + "/fastplong/{sample}.fastq",
+        # gz_filtlong = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz"
+        filtered = OUT + "/fastplong/{sample}.fastq",
     output:
-        filtered = directory(OUT + "/nanoplot/{sample}/"),
+        nanoplot = directory(OUT + "/nanoplot/{sample}/"),
         stats = OUT + "/nanoplot/{sample}/NanoStats.txt",
         # nano_fastp = directory(OUT + "/nanoplot/{sample}/"),
         # fastq_internal = OUT + "/nanoplot/fastq_unfiltered/{sample}/{sample}_NanoStats.csv",
@@ -15,8 +17,9 @@ rule nanoplot:
     conda:
         "../../envs/nanoplot.yaml"
     threads: int(config["threads"]["nanoplot"])
+    threads: int(config["threads"]["nanoplot"])
     resources: 
-        mem_gb=config["mem_gb"]["nanoplot"]
+        mem_gb=config["mem_gb"]["nanoplot"],
     log:
         OUT + "/log/nanoplot/{sample}.log"
     benchmark:
@@ -24,7 +27,7 @@ rule nanoplot:
     shell: # Only when all 3 NanoPlot reports have been generated can the edit python script start - So yeah they run sequentially now
         """
 echo $'\n====================================\n==     PROGRAM VERSIONS USED      ==\n====================================\n' >> {log}; conda list >> {log}
-NanoPlot --fastq {input.filtered} --outdir {output.filtered} 
+NanoPlot --fastq {input.filtered} --outdir {output.nanoplot} 
         """
 
 rule nanostats_to_tsv:

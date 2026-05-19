@@ -1,12 +1,11 @@
 import sys
 # Redirect all printing and exceptions to the snakemake log of this rule
 sys.stdout = sys.stderr = open(snakemake.log[0], "w")  # type: ignore
-
+import os
 import pandas as pd
 from functools import reduce
 import json
 import openpyxl
-import os
 
 def get_genus(species_csv: str) -> pd.DataFrame:
     species_df = pd.read_csv(species_csv, usecols=['sample', 'genus', 'species'])
@@ -24,16 +23,30 @@ def get_fastp(fastp_csv: str) -> pd.DataFrame:
     fastp_df['sample'] = fastp_df['sample'].astype(str).str.replace('-', '_')
     return fastp_df
 
-def get_quast(quast_csv: str) -> pd.DataFrame:
-    quast_df = pd.read_csv(quast_csv, sep='\t', usecols=["Assembly", "Total length", "# contigs", "N50", "GC (%)"])
-    quast_df.rename(
-    columns={"Assembly": "sample", "Total length": "Total length (Mbp)"},
-    inplace=True,
-)
-    quast_df["sample"] = quast_df["sample"].astype(str)
-    if any(quast_df['sample'].str.contains("_")):
-        quast_df['sample'] = quast_df['sample'].apply(lambda x: x.rsplit('_', 1)[0])
+# def get_quast(quast_csv: str) -> pd.DataFrame:
+#     quast_df = pd.read_csv(quast_csv, sep='\t', usecols=["Assembly", "Total length", "# contigs", "N50", "GC (%)"])
+#     quast_df.rename(
+#     columns={"Assembly": "sample", "Total length": "Total length (Mbp)"},
+#     inplace=True,
+# )
+#     quast_df["sample"] = quast_df["sample"].astype(str)
+#     if any(quast_df['sample'].str.contains("_")):
+#         quast_df['sample'] = quast_df['sample'].apply(lambda x: x.rsplit('_', 1)[0])
 
+#     return quast_df
+
+def get_quast(quast_csv: str) -> pd.DataFrame:
+    quast_df = pd.read_csv(quast_csv, sep='\t', usecols=["Assembly", "Total length", "# contigs", "GC (%)", "N50", "L50", "N90", "L90"])
+    quast_df.rename(
+        columns={"Assembly": "sample", "Total length": "Total length (Mbp)"},
+        inplace=True,
+    )
+    quast_df["sample"] = (
+        quast_df["sample"]
+        .astype(str)
+        .str.replace("-", "_", regex=False)
+        .str.replace("_autocycler$", "", regex=True)
+    )
     return quast_df
 
 def get_checkm(checkm_csv: str) -> pd.DataFrame:
@@ -50,8 +63,17 @@ def get_checkm(checkm_csv: str) -> pd.DataFrame:
         inplace=True,
     )
     checkm_df['sample'] = checkm_df['sample'].astype(str).str.replace('-', '_', regex=False)
-    print(checkm_df)
     return checkm_df
+
+# def get_coverage(genome_size_txt, fastplong_csv):
+#     with open(genome_size_txt) as f:
+#         genome_size = float(f.read().strip())
+
+#     fastplong_df = pd.read_csv(fastplong_csv, sep='\t')
+#     fastplong_df['sample'] = fastplong_df['sample'].astype(str).str.replace('-', '_')
+#     fastplong_df['coverage'] = round(fastplong_df['after_total_bases'] / genome_size, 1)
+#     coverage_df = fastplong_df[['sample', 'coverage']]
+#     return coverage_df
 
 def get_coverage(genome_size_txt_list, fastplong_csv):
     # Read fastplong summary

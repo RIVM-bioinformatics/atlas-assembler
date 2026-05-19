@@ -15,9 +15,14 @@ rule fastplong:
         mem_gb=config["mem_gb"]["fastplong"],
     shell:
         """
-        fastplong -i {input}/*fastq*  -o {output.filtered} -j {output.fastplong_json} -h {output.fastplong_html}  > {log} 2>&1
+        input_path="{input}"
+        if [ -d "$input_path" ]; then
+            fastq_files="$input_path"/*fastq*
+        else
+            fastq_files="$input_path"
+        fi
+        fastplong -i $fastq_files -o {output.filtered} -j {output.fastplong_json} -h {output.fastplong_html} > {log} 2>&1
         """
-    
     
 rule fastplongjson_to_tsv:
     input:
@@ -30,4 +35,4 @@ rule fastplongjson_to_tsv:
     shell:
         """
         python workflow/scripts/parse_fastplong.py {input} {output.tsv}
-        """
+        """    
