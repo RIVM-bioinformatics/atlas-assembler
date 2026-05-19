@@ -1,0 +1,7 @@
+name: genome_size
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - raven-assembler>=1.8.3       # https://github.com/lbcb-sci/raven
+  - seqtk>=1.4                   # https://github.com/lh3/seqtk

@@ -1,9 +1,9 @@
 rule nanoplot:
     input:
         # lambda wildcards: SAMPLES[wildcards.sample]["nanopore_input"]
-        # fastp = OUT + "/clean_unsorted_fastq/{sample}_p.fastq.gz",
-        # fastq_internal = OUT + "/fastq/chopper/unfiltered_{sample}.fastq",
         # gz_chopper = OUT + "/gz/chopper/{sample}_min" + config["length"] + ".fastq.gz",
+        # gz_filtlong = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz"
+        filtered = OUT + "/fastplong/{sample}.fastq",
         # gz_filtlong = OUT + "/gz/filtlong/{sample}_min1000_best" + config["keep_percentage"] + ".fastq.gz"
         filtered = OUT + "/fastplong/{sample}.fastq",
     output:
@@ -16,6 +16,7 @@ rule nanoplot:
         # read_depth_try = OUT + "/nanoplot/gz_filtlong/{sample}/min_read_depth.txt" # Was needed for Trycycler subsets but it does make the rule all clean, its a file created by the Python script in this rule.
     conda:
         "../../envs/nanoplot.yaml"
+    threads: int(config["threads"]["nanoplot"])
     threads: int(config["threads"]["nanoplot"])
     resources: 
         mem_gb=config["mem_gb"]["nanoplot"],
