@@ -10,6 +10,8 @@ for param in ["threads", "mem_gb", "run_time_minutes"]:
     for k in config[param]:
         config[param][k] = int(config[param][k])
 
+# print(SAMPLES)
+
 
 OUT = config["output_dir"]
 IN = config["input_dir"]
