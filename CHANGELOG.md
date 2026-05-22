@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/RIVM-bioinformatics/atlas-assembler/compare/v0.1.0...v0.2.0) (2026-05-22)
+
+
+### Features
+
+* updated juno library to new tag ([c7452f0](https://github.com/RIVM-bioinformatics/atlas-assembler/commit/c7452f058d84eaf133be691acde5029d0acb3c60))
+
 ## 0.1.0 (2026-05-19)
 
 
