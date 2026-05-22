@@ -24,7 +24,7 @@ dependencies:
   - openpyxl
 
   - pip:
-    - "--editable=git+https://github.com/RIVM-bioinformatics/juno-library.git@nanopore_integration#egg=juno-library"
+    - "--editable=git+https://github.com/RIVM-bioinformatics/juno-library.git@v2.3.0#egg=juno-library"
     - pyyaml
     - biopython
     - termcolor
