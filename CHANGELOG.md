@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/RIVM-bioinformatics/atlas-assembler/compare/v0.2.0...v0.2.1) (2026-06-02)
+
+
+### Bug Fixes
+
+* use skani output to create top species multireport ([524a13c](https://github.com/RIVM-bioinformatics/atlas-assembler/commit/524a13c25dcfbf11c324ecc844f15abb469a6936))
+
 ## [0.2.0](https://github.com/RIVM-bioinformatics/atlas-assembler/compare/v0.1.0...v0.2.0) (2026-05-22)
 
 
