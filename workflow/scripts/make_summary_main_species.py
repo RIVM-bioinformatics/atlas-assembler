@@ -198,9 +198,9 @@ def output_results_to_file(results_simple_df: pd.DataFrame, results_complex_df: 
     # ? with ILES coupling and is intended for analysts and/or groups that have not yet validated skani. The expanded, "complex", output is
     # ? written to a new file (decoupled from ILES) which is intended for scientist/WM's for interpretation and validation. NB., the simple
     # ? skani output is coupled to ILES in function `output_skani_top_hit_for_ILES`.
-    output_path_bracken = output_path.with_name(output_path.stem + "_bracken.csv") # old top_1_species_multireport.csv using bracken
-    print(f"Writing simple multireport to file {output_path_bracken}...")  # ! simple output, only contains kraken/bracken results
-    results_simple_df.to_csv(output_path_bracken, index=False)
+    
+    print(f"Writing simple multireport to file {output_path}...")  # ! simple output, only contains kraken/bracken results
+    results_simple_df.to_csv(output_path, index=False)
     
     output_path_complex = output_path.with_name(output_path.stem + "_expanded.csv")  # ! complex output, skani top2 results added to simple output
     print(f"Writing complex multireport to file {output_path_complex}...")
@@ -224,12 +224,12 @@ def output_top_1_species_multireport_skani(input_df: pd.DataFrame, output_basepa
     """
     Output the skani top hit for top_1_species_multireport.
     """
-    skani_import_base_filename = "top1_species_multireport.csv"  
+    skani_import_base_filename = "top1_species_multireport_skani.csv"  
     skani_import_filepath = output_basepath / skani_import_base_filename
     skani_formatted_results = convert_skani_df_to_iles_format(input_df)  # use input_df, not global
     skani_formatted_results = skani_formatted_results.rename(columns={"query_name": "sample", "Top_species": "full_species_name"})  # rename is now "monsternummer" after fix 1
     skani_formatted_results[['genus', 'species']] = skani_formatted_results['full_species_name'].str.split(' ', n=1, expand=True) # genus first
-    skani_formatted_results['sample'] = skani_formatted_results['sample'].str.split('-').str[0]  # remove any suffix after the sample name, e.g. "_R1" or "_R2" if present, to match the sample names in the bracken report
+    skani_formatted_results['sample'] = skani_formatted_results['sample'].str.split('-autocycler').str[0]  # remove any suffix after the sample name, e.g. "_R1" or "_R2" if present, to match the sample names in the bracken report
     # Fix index misalignment by merging on sample name
     skani_formatted_results = skani_formatted_results.merge(
         report_simple[["sample", "taxonomy_id"]],
