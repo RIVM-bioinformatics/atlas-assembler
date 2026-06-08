@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/RIVM-bioinformatics/atlas-assembler/compare/v0.2.1...v0.2.2) (2026-06-08)
+
+
+### Bug Fixes
+
+* bug in skani report ([6dc0801](https://github.com/RIVM-bioinformatics/atlas-assembler/commit/6dc0801f862d80ece0f5479c067e5f48bde52c85))
+
 ## [0.2.1](https://github.com/RIVM-bioinformatics/atlas-assembler/compare/v0.2.0...v0.2.1) (2026-06-02)
 
 
