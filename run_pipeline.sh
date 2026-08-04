@@ -12,6 +12,22 @@ output_dir="${2%/}"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null 2>&1 && pwd )"
 cd ${DIR}
 
+INPUT2="$(dirname "${1}")/input2"
+
+# Sanity checks
+if [ ! -z "${1}" ] || [ -z "${INPUT2}" ]
+then
+   mkdir "${INPUT2}"
+else
+    echo "no inputdir or input2 already exists"
+    exit 1
+fi
+
+if [ ! -d "${input_dir}" ]
+then
+    echo "input dir $input_dir does not exists"
+    exit 1
+fi
 #check if there is an exclusion file, if so change the parameter
 if [ ! -z "${irods_input_sys__dataset_id}" ] && [ -f "/data/BioGrid/NGSlab/sample_sheets/${irods_input_sys__dataset_id}.exclude" ]
 then
@@ -61,8 +77,8 @@ else
 fi
 
 set -euo pipefail
-
-python atlas_assembler.py --queue "${QUEUE}" -i "${input_dir}" -o "${output_dir}"  $EXCLUSION_FILE_COMMAND --sequencing-tech "nanopore"
+python link_and_rename.py -s "https://biorods.rivm.nl" "${input_dir}" "${INPUT2}"
+python atlas_assembler.py --queue "${QUEUE}" -i "${INPUT2}" -o "${output_dir}"  $EXCLUSION_FILE_COMMAND --sequencing-tech "nanopore"
 
 result=$?
 
@@ -98,7 +114,7 @@ do
     if [ ! -z ${!key} ] ; then
         attrname=${key:12}
         attrname=${attrname/__/::}
-        echo "${attrname}: '${!key}'" >> ${OUTPUTDIR}/metadata.yml
+        echo "${attrname}: '${!key}'" >> ${output_dir}/metadata.yml
     fi
 done
 
