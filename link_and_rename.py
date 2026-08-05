@@ -57,14 +57,10 @@ def main(args):
         for item in barcodes:
             if item["barcode"] == barcode:
                 newname = os.path.join(
-                    args.outputdir,
-                    runinfo["name"]
-                    + "_B"
-                    + barcode[-2:]
-                    + "_"
-                    + item["sampleid"]
-                    + ".fastq.gz",
-                )
+                        args.outputdir,
+                        item["sampleid"]
+                        + ".fastq.gz",
+                    )
                 print(name, ">", newname)
                 #shutil.copy(name, newname)
                 pathlib.Path(newname).symlink_to(name)
